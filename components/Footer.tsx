@@ -44,15 +44,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="relative w-10 h-10">
+              <div className="relative w-14 h-14">
                 <Image
-                  src="/snow-icon.png"
+                  src="/snow-logo.png"
                   alt="SNW Store Logo"
                   fill
                   className="object-contain"
                 />
               </div>
-              <span className="text-2xl font-bold text-gradient">SNW Store</span>
             </div>
             <p className="text-primary-lightest/70 mb-4 leading-relaxed">
               Sua revenda confiável no Mercado Livre. Produtos de qualidade
@@ -75,7 +74,6 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Produtos</h4>
             <ul className="space-y-2">
               {footerLinks.produtos.map((link, index) => (
                 <li key={index}>
@@ -91,7 +89,6 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Empresa</h4>
             <ul className="space-y-2">
               {footerLinks.empresa.map((link, index) => (
                 <li key={index}>
@@ -107,7 +104,6 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-white font-semibold mb-4">Suporte</h4>
             <ul className="space-y-2">
               {footerLinks.suporte.map((link, index) => (
                 <li key={index}>
@@ -127,9 +123,6 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-primary-lightest/50 text-sm">
               © {currentYear} SNW Store. Todos os direitos reservados.
-            </p>
-            <p className="text-primary-lightest/50 text-sm">
-              Feito com ❤️ para nossos clientes
             </p>
           </div>
         </div>
