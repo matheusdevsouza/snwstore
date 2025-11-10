@@ -119,3 +119,24 @@
   fill: #0D1118;
 }
 
+.custom-shape-divider-top-1762751137 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: 1;
+}
+
+.custom-shape-divider-top-1762751137 svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
+}
+
+.custom-shape-divider-top-1762751137 .shape-fill {
+  fill: #0D1118;
+}
+

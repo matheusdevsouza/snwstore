@@ -9,7 +9,7 @@ config.autoAddCss = false
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'SNW STORE - Revendas dos Melhores Produtos',
+  title: 'SNW Store - Revendas dos Melhores Produtos',
   description: 'Encontre os melhores produtos com os melhores preços. Revendas confiáveis no Mercado Livre.',
   keywords: 'mercado livre, revendas, produtos, compras online',
   icons: {

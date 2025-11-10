@@ -3,9 +3,9 @@
 import { useEffect } from 'react'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
-import Products from '@/components/Products'
 import Features from '@/components/Features'
-import About from '@/components/About'
+import AboutSection from '@/components/AboutSection'
+import Products from '@/components/Products'
 import Contact from '@/components/Contact'
 import Footer from '@/components/Footer'
 
@@ -20,7 +20,7 @@ export default function Home() {
       <Hero />
       <Features />
       <Products />
-      <About />
+      <AboutSection />
       <Contact />
       <Footer />
     </main>

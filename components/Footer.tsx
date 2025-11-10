@@ -20,7 +20,6 @@ export default function Footer() {
       { name: 'Novidades', href: '#' },
     ],
     empresa: [
-      { name: 'Sobre Nós', href: '#about' },
       { name: 'Nossa História', href: '#' },
       { name: 'Política de Privacidade', href: '#' },
       { name: 'Termos de Uso', href: '#' },
@@ -48,12 +47,12 @@ export default function Footer() {
               <div className="relative w-10 h-10">
                 <Image
                   src="/snow-icon.png"
-                  alt="SNW STORE Logo"
+                  alt="SNW Store Logo"
                   fill
                   className="object-contain"
                 />
               </div>
-              <span className="text-2xl font-bold text-gradient">SNW STORE</span>
+              <span className="text-2xl font-bold text-gradient">SNW Store</span>
             </div>
             <p className="text-primary-lightest/70 mb-4 leading-relaxed">
               Sua revenda confiável no Mercado Livre. Produtos de qualidade
@@ -127,7 +126,7 @@ export default function Footer() {
         <div className="divider-weak pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-primary-lightest/50 text-sm">
-              © {currentYear} SNW STORE. Todos os direitos reservados.
+              © {currentYear} SNW Store. Todos os direitos reservados.
             </p>
             <p className="text-primary-lightest/50 text-sm">
               Feito com ❤️ para nossos clientes

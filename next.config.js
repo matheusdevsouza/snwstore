@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['http2.mlstatic.com', 'mercadolivre.com.br'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'http2.mlstatic.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'mercadolivre.com.br',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
     unoptimized: false,
   },
   reactStrictMode: true,

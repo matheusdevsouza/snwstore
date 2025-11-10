@@ -1,4 +1,4 @@
-# ❄️ SNW STORE - Landing Page
+# ❄️ SNW Store - Landing Page
 
 Landing page avançada e moderna para revendas no Mercado Livre, com design dark mode elegante, animações suaves com GSAP, modelo 3D interativo e uma experiência de usuário excepcional.
 
@@ -293,7 +293,7 @@ O modelo 3D pode ser substituído:
 ## 📄 Metadados e SEO
 
 O projeto inclui metadados otimizados:
-- **Title**: "SNW STORE - Revendas dos Melhores Produtos"
+- **Title**: "SNW Store - Revendas dos Melhores Produtos"
 - **Description**: Descrição otimizada para SEO
 - **Keywords**: Palavras-chave relevantes
 - **Favicon**: Ícone personalizado (snow-icon.png)
@@ -340,4 +340,4 @@ Para dúvidas ou problemas:
 
 ---
 
-**Desenvolvido com ❤️ para SNW STORE**
+**Desenvolvido com ❤️ para SNW Store**

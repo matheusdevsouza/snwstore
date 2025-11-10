@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faTimes, faShoppingCart, faHome, faBox, faInfoCircle, faEnvelope } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faTimes, faShoppingCart, faHome, faBox, faEnvelope, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 import { gsap } from '@/lib/gsap'
 
@@ -21,19 +21,23 @@ export default function Header() {
       setIsScrolled(scrolled)
       
       const sections = ['home', 'products', 'about', 'contact']
-      const scrollPosition = window.scrollY + 100
+      const scrollPosition = window.scrollY + 150
       
-      for (const section of sections) {
+      let currentSection = 'home'
+      
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i]
         const element = document.getElementById(section)
         if (element) {
           const offsetTop = element.offsetTop
-          const offsetHeight = element.offsetHeight
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section)
+          if (scrollPosition >= offsetTop - 100) {
+            currentSection = section
             break
           }
         }
       }
+      
+      setActiveSection(currentSection)
     }
 
     let ticking = false
@@ -194,7 +198,7 @@ export default function Header() {
               >
                 <Image
                   src="/snow-logo.png"
-                  alt="SNW STORE Logo"
+                  alt="SNW Store Logo"
                   fill
                   className="object-contain pointer-events-none select-none"
                   priority

@@ -119,28 +119,6 @@ export default function Features() {
         },
       })
 
-      cards.forEach((card) => {
-        const icon = card.querySelector('.feature-icon') as HTMLElement
-        if (icon) {
-          card.addEventListener('mouseenter', () => {
-            gsap.to(icon, {
-              scale: 1.2,
-              rotation: 8,
-              duration: 0.4,
-              ease: 'back.out(1.5)'
-            })
-          })
-
-          card.addEventListener('mouseleave', () => {
-            gsap.to(icon, {
-              scale: 1,
-              rotation: 0,
-              duration: 0.3,
-              ease: 'power2.out'
-            })
-          })
-        }
-      })
     }, sectionRef)
 
     return () => ctx.revert()
@@ -178,7 +156,7 @@ export default function Features() {
               key={index}
               className="feature-card group relative bg-[#0D1118]/60 backdrop-blur-sm rounded-2xl p-8 border border-primary-base/30 card-hover overflow-hidden"
             >
-              <div className="feature-icon mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-base to-primary-light text-primary-lightest text-2xl transition-transform duration-300">
+              <div className="feature-icon mb-6 text-4xl text-primary-light">
                 <FontAwesomeIcon icon={feature.icon} />
               </div>
 
