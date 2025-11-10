@@ -49,50 +49,97 @@ export default function Features() {
   const sectionRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
+  const dividerRef = useRef<HTMLDivElement>(null)
   const cardsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
     const ctx = gsap.context(() => {
-      if (!titleRef.current || !subtitleRef.current || !cardsRef.current || !sectionRef.current) return
+      if (!titleRef.current || !subtitleRef.current || !dividerRef.current || !cardsRef.current || !sectionRef.current) return
 
       const cards = Array.from(cardsRef.current.querySelectorAll('.feature-card')) as HTMLElement[]
 
+      gsap.set(titleRef.current, { opacity: 0, y: 50, scale: 0.95 })
+      gsap.set(subtitleRef.current, { opacity: 0, y: 30 })
+      gsap.set(dividerRef.current, { 
+        opacity: 0, 
+        scaleX: 0,
+        transformOrigin: 'center center'
+      })
+      gsap.set(cards, { 
+        opacity: 0, 
+        y: 80,
+        scale: 0.85
+      })
+
       ScrollTrigger.create({
         trigger: sectionRef.current,
-        start: 'top 85%',
+        start: 'top 75%',
         once: true,
         onEnter: () => {
           const tl = gsap.timeline()
 
-          tl.fromTo(
-            titleRef.current,
-            { y: 30 },
-            { y: 0, duration: 0.8, ease: 'power3.out' }
-          )
+          tl.to(titleRef.current, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 1.2,
+            ease: 'power4.out'
+          })
 
-          tl.fromTo(
-            subtitleRef.current,
-            { y: 20 },
-            { y: 0, duration: 0.8, ease: 'power3.out' },
-            '-=0.5'
-          )
+          tl.to(subtitleRef.current, {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: 'power3.out'
+          }, '-=0.7')
+
+          tl.to(dividerRef.current, {
+            opacity: 1,
+            scaleX: 1,
+            duration: 0.8,
+            ease: 'power2.out'
+          }, '-=0.5')
 
           if (cards.length > 0) {
-            tl.fromTo(
-              cards,
-              { y: 40 },
-              { 
-                y: 0, 
-                duration: 0.8, 
-                ease: 'power3.out', 
-                stagger: 0.15 
-              },
-              '-=0.3'
-            )
+            tl.to(cards, {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 1.1,
+              ease: 'back.out(1.2)',
+              stagger: {
+                amount: 0.9,
+                from: 'start',
+                ease: 'power2.out'
+              }
+            }, '-=0.5')
           }
         },
+      })
+
+      cards.forEach((card) => {
+        const icon = card.querySelector('.feature-icon') as HTMLElement
+        if (icon) {
+          card.addEventListener('mouseenter', () => {
+            gsap.to(icon, {
+              scale: 1.2,
+              rotation: 8,
+              duration: 0.4,
+              ease: 'back.out(1.5)'
+            })
+          })
+
+          card.addEventListener('mouseleave', () => {
+            gsap.to(icon, {
+              scale: 1,
+              rotation: 0,
+              duration: 0.3,
+              ease: 'power2.out'
+            })
+          })
+        }
       })
     }, sectionRef)
 
@@ -119,7 +166,7 @@ export default function Features() {
           >
             Oferecemos a melhor experiência de compra com qualidade, segurança e confiança
           </p>
-          <div className="divider-weak w-24 mx-auto mt-8" />
+          <div ref={dividerRef} className="divider-weak w-24 mx-auto mt-8" />
         </div>
 
         <div 
@@ -129,20 +176,24 @@ export default function Features() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="feature-card group relative bg-[#0D1118]/60 backdrop-blur-sm rounded-2xl p-8 border border-primary-base/30 card-hover"
+              className="feature-card group relative bg-[#0D1118]/60 backdrop-blur-sm rounded-2xl p-8 border border-primary-base/30 card-hover overflow-hidden"
             >
-              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-base to-primary-light text-primary-lightest text-2xl group-hover:scale-110 transition-transform duration-300">
+              <div className="feature-icon mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-base to-primary-light text-primary-lightest text-2xl transition-transform duration-300">
                 <FontAwesomeIcon icon={feature.icon} />
               </div>
 
-              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary-lightest transition-colors">
+              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary-lightest transition-colors duration-300">
                 {feature.title}
               </h3>
-              <p className="text-primary-lightest/70 leading-relaxed">
+              <p className="text-primary-lightest/70 leading-relaxed group-hover:text-primary-lightest/90 transition-colors duration-300">
                 {feature.description}
               </p>
 
-              <div className="absolute inset-0 rounded-2xl bg-primary-light/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-light/10 via-transparent to-transparent" />
+              </div>
             </div>
           ))}
         </div>

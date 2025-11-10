@@ -116,7 +116,6 @@ export default function Header() {
         e.stopPropagation()
         if (isHovering && logoRef.current) {
           isHovering = false
-          // Voltar ao estado normal
           if (hoverAnimation) hoverAnimation.kill()
           hoverAnimation = gsap.to(logoRef.current, {
             scale: 1,
