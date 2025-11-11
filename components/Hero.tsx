@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { gsap, ScrollTrigger } from '@/lib/gsap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowDown, faShoppingBag, faStar, faBox, faUserFriends, faStarHalfStroke } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingBag, faStar, faBox, faUserFriends, faStarHalfStroke } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
@@ -18,7 +18,6 @@ export default function Hero() {
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
-  const scrollIndicatorRef = useRef<HTMLDivElement>(null)
   const logoRef = useRef<HTMLDivElement>(null)
   const backgroundGlow1Ref = useRef<HTMLDivElement>(null)
   const backgroundGlow2Ref = useRef<HTMLDivElement>(null)
@@ -69,17 +68,6 @@ export default function Hero() {
           },
           '-=0.3'
         )
-        .from(
-          scrollIndicatorRef.current,
-          {
-            y: 20,
-            opacity: 0,
-            duration: 0.6,
-            ease: 'power2.out',
-          },
-          '-=0.2'
-        )
-        
         .from(
           backgroundGlow1Ref.current,
           {
@@ -149,11 +137,11 @@ export default function Hero() {
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
         <div 
           ref={backgroundGlow1Ref}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-light rounded-full mix-blend-multiply filter blur-3xl opacity-5 animate-float" 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-light rounded-full mix-blend-multiply filter blur-3xl opacity-[0.03] animate-float" 
         />
         <div 
           ref={backgroundGlow2Ref}
-          className="absolute top-3/4 right-1/4 w-96 h-96 bg-primary-lightest rounded-full mix-blend-multiply filter blur-3xl opacity-5 animate-float" 
+          className="absolute top-3/4 right-1/4 w-96 h-96 bg-primary-lightest rounded-full mix-blend-multiply filter blur-3xl opacity-[0.03] animate-float" 
           style={{ animationDelay: '2s' }} 
         />
       </div>
@@ -164,7 +152,7 @@ export default function Hero() {
             ref={rotatingGlowRef}
             className="w-full h-full animate-rotate-glow"
             style={{
-              background: 'radial-gradient(circle, rgba(48, 169, 217, 0.12) 0%, rgba(153, 226, 242, 0.08) 30%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(48, 169, 217, 0.05) 0%, rgba(153, 226, 242, 0.03) 30%, transparent 70%)',
               filter: 'blur(60px)',
             }}
           />
@@ -172,7 +160,7 @@ export default function Hero() {
             ref={rotatingGlow2Ref}
             className="absolute inset-0 w-full h-full"
             style={{
-              background: 'radial-gradient(circle, rgba(153, 226, 242, 0.15) 0%, rgba(48, 169, 217, 0.1) 40%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(153, 226, 242, 0.06) 0%, rgba(48, 169, 217, 0.04) 40%, transparent 70%)',
               filter: 'blur(80px)',
               animation: 'rotate-glow 25s linear infinite reverse',
             }}
@@ -276,30 +264,6 @@ export default function Hero() {
         </svg>
       </div>
 
-      <div 
-        ref={scrollIndicatorRef}
-        className="z-10 pointer-events-auto"
-        style={{ 
-          position: 'absolute',
-          bottom: '12px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-        }}
-      >
-        <a 
-          href="#products" 
-          className="text-primary-lightest/70 hover:text-primary-lightest transition-colors inline-block"
-          onClick={(e) => {
-            e.preventDefault()
-            const element = document.getElementById('products')
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }
-          }}
-        >
-          <FontAwesomeIcon icon={faArrowDown} className="text-2xl" />
-        </a>
-      </div>
     </section>
   )
 }

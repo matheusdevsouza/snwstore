@@ -18,13 +18,14 @@ export default function AboutSection() {
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const dividerRef = useRef<HTMLDivElement>(null)
   const mainCardsRef = useRef<HTMLDivElement>(null)
+  const valuesTitleRef = useRef<HTMLHeadingElement>(null)
   const valuesRef = useRef<HTMLDivElement>(null)
 
   const mainContent = [
     {
       icon: faHistory,
       title: 'Nossa História',
-      description: 'A Snow nasceu com a missão de trazer os melhores produtos e experiências para nossos clientes. Desde o início, acreditamos que qualidade, transparência e compromisso são os pilares de um negócio de sucesso.',
+      description: 'A SNW Store nasceu com a missão de trazer os melhores produtos e experiências para nossos clientes. Desde o início, acreditamos que qualidade, transparência e compromisso são os pilares de um negócio de sucesso.',
       additionalText: 'Ao longo dos anos, construímos uma comunidade de clientes satisfeitos que confiam em nós para suas necessidades. Cada produto que oferecemos passa por rigoroso controle de qualidade, garantindo originalidade e excelência.',
     },
     {
@@ -79,6 +80,7 @@ export default function AboutSection() {
         y: 60,
         scale: 0.9
       })
+      gsap.set(valuesTitleRef.current, { opacity: 0, y: 40, scale: 0.95 })
       gsap.set(valueCards, {
         opacity: 0,
         y: 60,
@@ -128,6 +130,16 @@ export default function AboutSection() {
             }, '-=0.4')
           }
 
+          if (valuesTitleRef.current) {
+            tl.to(valuesTitleRef.current, {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 1,
+              ease: 'power3.out'
+            }, '-=0.2')
+          }
+
           if (valueCards.length > 0) {
             tl.to(valueCards, {
               opacity: 1,
@@ -139,7 +151,7 @@ export default function AboutSection() {
                 amount: 0.6,
                 from: 'start'
               }
-            }, '-=0.3')
+            }, '-=0.5')
           }
         },
       })
@@ -222,7 +234,10 @@ export default function AboutSection() {
         </div>
 
         <div>
-          <h3 className="text-3xl font-bold text-gray-900 text-center mb-12">
+          <h3 
+            ref={valuesTitleRef}
+            className="text-3xl font-bold text-gray-900 text-center mb-12"
+          >
             Nossos <span className="text-gradient">Valores</span>
           </h3>
           <div
@@ -255,8 +270,6 @@ export default function AboutSection() {
           </div>
         </div>
       </div>
-
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-24" />
     </section>
   )
 }

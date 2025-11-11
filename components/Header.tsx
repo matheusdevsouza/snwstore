@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faTimes, faShoppingCart, faHome, faBox, faEnvelope, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faTimes, faShoppingCart, faHome, faBox, faEnvelope, faInfoCircle, faComments } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 import { gsap } from '@/lib/gsap'
 
@@ -20,8 +20,8 @@ export default function Header() {
       const scrolled = window.scrollY > 20
       setIsScrolled(scrolled)
       
-      const sections = ['home', 'products', 'about', 'contact']
-      const scrollPosition = window.scrollY + 150
+      const sections = ['home', 'products', 'about', 'testimonials', 'contact']
+      const scrollPosition = window.scrollY + 200
       
       let currentSection = 'home'
       
@@ -29,8 +29,9 @@ export default function Header() {
         const section = sections[i]
         const element = document.getElementById(section)
         if (element) {
-          const offsetTop = element.offsetTop
-          if (scrollPosition >= offsetTop - 100) {
+          const rect = element.getBoundingClientRect()
+          const elementTop = rect.top + window.scrollY
+          if (scrollPosition >= elementTop - 150) {
             currentSection = section
             break
           }
@@ -151,6 +152,7 @@ export default function Header() {
     { name: 'Início', href: '#home', id: 'home', icon: faHome },
     { name: 'Produtos', href: '#products', id: 'products', icon: faBox },
     { name: 'Sobre', href: '#about', id: 'about', icon: faInfoCircle },
+    { name: 'Depoimentos', href: '#testimonials', id: 'testimonials', icon: faComments },
     { name: 'Contato', href: '#contact', id: 'contact', icon: faEnvelope },
   ]
 
