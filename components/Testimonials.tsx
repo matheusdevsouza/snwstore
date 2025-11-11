@@ -191,7 +191,7 @@ export default function Testimonials() {
                 </div>
 
                 <p className="text-gray-700 leading-relaxed text-base mb-6 group-hover:text-gray-900 transition-colors duration-300">
-                  "{testimonial.text}"
+                  &ldquo;{testimonial.text}&rdquo;
                 </p>
 
                 <div className="flex items-center space-x-4">
