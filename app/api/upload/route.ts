@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Upload error:', error)
       
-      if (error.message?.includes('Bucket not found') || error.statusCode === '404' || error.status === 400) {
+      if (error.message?.includes('Bucket not found') || error.message?.includes('not found')) {
         return NextResponse.json(
           { 
             success: false, 

@@ -14,7 +14,7 @@ export interface AdminUser {
   is_active: boolean
 }
 
-export interface TokenPayload {
+export interface TokenPayload extends jose.JWTPayload {
   userId: string
   email: string
   role: string

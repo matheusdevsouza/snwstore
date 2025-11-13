@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -155,11 +155,7 @@ export default function AdminDashboard({ user }: { user: User }) {
     date: 'all' 
   })
 
-  useEffect(() => {
-    loadData()
-  }, [activeTab, logsDateFilter, logsEventTypeFilter])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true)
     try {
       if (activeTab === 'products') {
@@ -255,7 +251,11 @@ export default function AdminDashboard({ user }: { user: User }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [activeTab, logsDateFilter, logsEventTypeFilter])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleLogout = async () => {
     try {
@@ -1389,9 +1389,11 @@ export default function AdminDashboard({ user }: { user: User }) {
                         <div className="relative z-10 flex items-start justify-between mb-4">
                           <div className="flex items-center space-x-4">
                             <div className="w-14 h-14 rounded-xl overflow-hidden ring-2 ring-primary-light/30 group-hover:ring-primary-light/50 transition-all duration-300">
-                              <img
+                              <Image
                                 src={testimonial.avatar_url}
                                 alt={testimonial.name}
+                                width={56}
+                                height={56}
                                 className="w-full h-full object-cover"
                               />
                             </div>
