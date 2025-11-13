@@ -30,6 +30,15 @@ yarn-error.log*
 # vercel
 .vercel
 
+# banco de dados
+/supabase
+
+# scripts
+/scripts
+
+# credenciais
+ADMIN_CREDENTIALS.txt
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

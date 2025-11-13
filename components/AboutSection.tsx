@@ -165,13 +165,8 @@ export default function AboutSection() {
     <section
       ref={sectionRef}
       id="about"
-      className="pt-24 pb-24 px-4 relative bg-white overflow-hidden"
+      className="pt-24 pb-24 px-4 relative bg-transparent overflow-visible"
     >
-      <div className="custom-shape-divider-top-1762751137">
-        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" className="shape-fill" />
-        </svg>
-      </div>
 
       <div className="absolute inset-0 opacity-5 pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-light/30 rounded-full blur-3xl" />
@@ -201,36 +196,64 @@ export default function AboutSection() {
           ref={mainCardsRef}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16"
         >
-          {mainContent.map((content, index) => (
-            <div
-              key={index}
-              className="main-card group relative bg-white rounded-3xl p-8 md:p-10 border-2 border-gray-200 shadow-lg card-hover overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          {mainContent.map((content, index) => {
+            const gradients = [
+              'linear-gradient(135deg, rgba(153, 226, 242, 0.18) 0%, rgba(48, 169, 217, 0.12) 50%, rgba(153, 226, 242, 0.15) 100%)',
+              'linear-gradient(135deg, rgba(48, 169, 217, 0.15) 0%, rgba(2, 56, 89, 0.1) 50%, rgba(48, 169, 217, 0.12) 100%)',
+            ]
+            
+            return (
+              <div
+                key={index}
+                className="main-card group relative rounded-3xl p-8 md:p-10 card-hover overflow-hidden"
+                style={{
+                  background: gradients[index % gradients.length],
+                  border: '1px solid rgba(48, 169, 217, 0.2)',
+                  boxShadow: '0 8px 32px rgba(48, 169, 217, 0.06), 0 0 15px rgba(48, 169, 217, 0.04)',
+                }}
+              >
+                <div 
+                  className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 0%, rgba(48, 169, 217, 0.12) 0%, transparent 70%)',
+                  }}
+                />
+
+                <div 
+                  className="absolute inset-0 rounded-3xl opacity-[0.02] pointer-events-none"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(48, 169, 217, 0.2) 1px, transparent 0)',
+                    backgroundSize: '40px 40px',
+                  }}
+                />
+
+                <div 
+                  className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{
+                    boxShadow: 'inset 0 0 30px rgba(48, 169, 217, 0.15), 0 0 40px rgba(48, 169, 217, 0.1)',
+                  }}
+                />
               
-              <div className="relative z-10">
-                <div className="flex items-center mb-6">
-                  <div className="text-3xl md:text-4xl mr-4 text-primary-light">
-                    <FontAwesomeIcon icon={content.icon} />
+                <div className="relative z-10">
+                  <div className="flex items-center mb-6">
+                    <div className="text-3xl md:text-4xl mr-4 text-primary-light">
+                      <FontAwesomeIcon icon={content.icon} />
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-primary-light transition-colors duration-300">
+                      {content.title}
+                    </h3>
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    {content.title}
-                  </h3>
+
+                  <p className="text-gray-700 leading-relaxed text-base mb-4 group-hover:text-gray-900 transition-colors duration-300">
+                    {content.description}
+                  </p>
+                  <p className="text-gray-600 leading-relaxed text-sm group-hover:text-gray-700 transition-colors duration-300">
+                    {content.additionalText}
+                  </p>
                 </div>
-
-                <p className="text-gray-700 leading-relaxed text-base mb-4 group-hover:text-gray-900 transition-colors duration-300">
-                  {content.description}
-                </p>
-                <p className="text-gray-600 leading-relaxed text-sm group-hover:text-gray-700 transition-colors duration-300">
-                  {content.additionalText}
-                </p>
               </div>
-
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-light/10 via-transparent to-transparent" />
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         <div>
@@ -244,29 +267,61 @@ export default function AboutSection() {
             ref={valuesRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {values.map((value, index) => (
-              <div
-                key={index}
-                className="value-card group relative bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-lg card-hover overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {values.map((value, index) => {
+              const gradients = [
+                'linear-gradient(135deg, rgba(153, 226, 242, 0.18) 0%, rgba(48, 169, 217, 0.12) 50%, rgba(153, 226, 242, 0.15) 100%)',
+                'linear-gradient(135deg, rgba(48, 169, 217, 0.15) 0%, rgba(2, 56, 89, 0.1) 50%, rgba(48, 169, 217, 0.12) 100%)',
+                'linear-gradient(135deg, rgba(153, 226, 242, 0.15) 0%, rgba(48, 169, 217, 0.1) 50%, rgba(153, 226, 242, 0.18) 100%)',
+                'linear-gradient(135deg, rgba(2, 56, 89, 0.12) 0%, rgba(48, 169, 217, 0.15) 50%, rgba(153, 226, 242, 0.12) 100%)',
+              ]
+              
+              return (
+                <div
+                  key={index}
+                  className="value-card group relative rounded-2xl p-6 card-hover overflow-hidden"
+                  style={{
+                    background: gradients[index % gradients.length],
+                    border: '1px solid rgba(48, 169, 217, 0.2)',
+                    boxShadow: '0 8px 32px rgba(48, 169, 217, 0.06), 0 0 15px rgba(48, 169, 217, 0.04)',
+                  }}
+                >
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(circle at 50% 0%, rgba(48, 169, 217, 0.12) 0%, transparent 70%)',
+                    }}
+                  />
+
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-[0.02] pointer-events-none"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(48, 169, 217, 0.2) 1px, transparent 0)',
+                      backgroundSize: '40px 40px',
+                    }}
+                  />
+
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{
+                      boxShadow: 'inset 0 0 30px rgba(48, 169, 217, 0.15), 0 0 40px rgba(48, 169, 217, 0.1)',
+                    }}
+                  />
                 
-                <div className="value-icon mb-4 text-4xl text-primary-light">
-                  <FontAwesomeIcon icon={value.icon} />
-                </div>
+                  <div className="relative z-10">
+                    <div className="value-icon mb-4 text-4xl text-primary-light">
+                      <FontAwesomeIcon icon={value.icon} />
+                    </div>
 
-                <h4 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-primary-light transition-colors duration-300">
-                  {value.title}
-                </h4>
-                <p className="text-gray-600 text-sm leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                  {value.description}
-                </p>
-
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-light/10 via-transparent to-transparent" />
+                    <h4 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-primary-light transition-colors duration-300">
+                      {value.title}
+                    </h4>
+                    <p className="text-gray-600 text-sm leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                      {value.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>

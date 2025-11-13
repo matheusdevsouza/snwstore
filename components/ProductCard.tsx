@@ -4,17 +4,18 @@ import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHeart, faStar, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
+import { trackProductClick } from '@/lib/analytics'
 
 interface Product {
-  id: number
+  id: string
   name: string
-  price: string
-  originalPrice: string
+  price: number
+  original_price: number | null
   rating: number
-  image: string
+  image_url: string
   link: string
   description: string
-  category: string
+  category_slug: string
 }
 
 interface ProductCardProps {
@@ -42,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="relative w-full h-64 mb-4 overflow-hidden bg-gradient-to-br from-primary-base/30 to-primary-light/10">
         <Image
-          src={product.image}
+          src={product.image_url}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -81,11 +82,13 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center space-x-3 pt-2">
           <span className="text-2xl font-bold text-primary-light">
-            {product.price}
+            R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-sm text-primary-lightest/50 line-through">
-            {product.originalPrice}
-          </span>
+          {product.original_price && (
+            <span className="text-sm text-primary-lightest/50 line-through">
+              R$ {product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          )}
         </div>
 
         <div className="pt-2">
@@ -94,7 +97,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="w-full button-primary flex items-center justify-center space-x-2 text-sm py-2.5"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              trackProductClick(
+                product.id,
+                product.name,
+                product.category_slug,
+                product.link
+              )
+            }}
           >
             <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
             <span>Ver Anúncio</span>

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, Suspense, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, Environment, OrbitControls } from '@react-three/drei'
+import { useGLTF, OrbitControls } from '@react-three/drei'
 import type { Group } from 'three'
 import * as THREE from 'three'
 import { gsap } from 'gsap'
@@ -23,28 +23,36 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
     if (!isInitialized.current && scene) {
       scene.traverse((child: any) => {
         if (child instanceof THREE.Mesh) {
-          if (child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive = new THREE.Color(0x30a9d9)
-            child.material.emissiveIntensity = 0.2
-            child.material.metalness = 0.3
-            child.material.roughness = 0.7
-            child.material.needsUpdate = true
-          }
-          if (child.material instanceof THREE.MeshBasicMaterial) {
-            child.material.color = new THREE.Color(0x99e2f2)
-            child.material.transparent = true
-            child.material.opacity = 0.9
-          }
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat: any) => {
-              if (mat instanceof THREE.MeshStandardMaterial) {
-                mat.emissive = new THREE.Color(0x30a9d9)
-                mat.emissiveIntensity = 0.2
-                mat.metalness = 0.3
-                mat.roughness = 0.7
-                mat.needsUpdate = true
+          const processMaterial = (material: THREE.Material) => {
+            if (material instanceof THREE.MeshStandardMaterial) {
+              const hasTexture = material.map || material.normalMap || material.roughnessMap || material.metalnessMap || material.emissiveMap || material.aoMap
+              
+              if (hasTexture) {
+                return
               }
-            })
+              
+              if (!material.emissive || material.emissive.getHex() === 0x000000) {
+                material.emissive = new THREE.Color(0x30a9d9)
+                material.emissiveIntensity = 0.2
+                material.metalness = 0.3
+                material.roughness = 0.7
+                material.needsUpdate = true
+              }
+            } else if (material instanceof THREE.MeshBasicMaterial) {
+              if (!material.map) {
+                material.color = new THREE.Color(0x99e2f2)
+                material.transparent = true
+                if (material.opacity === 1) {
+                  material.opacity = 0.9
+                }
+              }
+            }
+          }
+
+          if (Array.isArray(child.material)) {
+            child.material.forEach(processMaterial)
+          } else {
+            processMaterial(child.material)
           }
         }
       })
@@ -295,8 +303,6 @@ function Scene({
       <Model url="/snow.glb" isInteracting={isInteracting} onInteractionChange={onInteractionChange} modelRef={modelRef} />
 
       <InteractiveControls onInteractionChange={onInteractionChange} modelRef={modelRef} />
-
-      <Environment preset="night" />
     </>
   )
 }

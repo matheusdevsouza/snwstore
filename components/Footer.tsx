@@ -57,17 +57,17 @@ export default function Footer() {
   useEffect(() => {
     if (!footerRef.current) return
 
-      const linkElements = footerRef.current.querySelectorAll('.footer-link-item')
-      const cleanupFunctions: (() => void)[] = []
-      
-      linkElements.forEach((link) => {
+    const linkElements = footerRef.current.querySelectorAll('.footer-link-item')
+    const cleanupFunctions: (() => void)[] = []
+    
+    linkElements.forEach((link) => {
         const snowflakeElement = link.querySelector('.link-snowflake') as HTMLElement
 
         if (!snowflakeElement) return
 
-        const handleMouseEnter = () => {
+      const handleMouseEnter = () => {
         gsap.killTweensOf([snowflakeElement, link])
-
+        
         const tl = gsap.timeline()
         
         tl.to(link, {
@@ -116,7 +116,7 @@ export default function Footer() {
           duration: 0.3,
           ease: 'power2.in',
         }, 0)
-
+        
         tl.to(link, {
           paddingLeft: 0,
           duration: 0.4,
@@ -156,7 +156,7 @@ export default function Footer() {
                 />
               </div>
             </div>
-            <p className="text-primary-lightest/70 mb-4 leading-relaxed">
+            <p className="text-primary-lightest/50 mb-4 leading-relaxed">
               Sua revenda confiável no Mercado Livre. Produtos de qualidade
               com os melhores preços e entrega rápida.
             </p>
@@ -167,7 +167,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-lg bg-primary-base/30 flex items-center justify-center text-primary-lightest hover:bg-primary-light hover:text-primary-darkest transition-all duration-300"
+                  className="w-10 h-10 rounded-lg bg-primary-base/30 flex items-center justify-center text-primary-lightest/60 hover:bg-primary-light/50 hover:text-primary-lightest/80 transition-all duration-300"
                   aria-label={social.label}
                 >
                   <FontAwesomeIcon icon={social.icon} />
@@ -177,10 +177,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-primary-lightest font-semibold text-lg mb-4 flex items-center space-x-2">
+            <h3 className="text-white font-semibold text-lg mb-4 flex items-center space-x-2">
               <FontAwesomeIcon 
                 icon={footerLinks.produtos.icon} 
-                className="text-primary-light text-sm"
+                className="text-primary-light/60 text-sm"
               />
               <span>{footerLinks.produtos.title}</span>
             </h3>
@@ -189,12 +189,12 @@ export default function Footer() {
                 <li key={index}>
                   <a
                     href={link.href}
-                    className="footer-link-item relative inline-block text-primary-lightest/70 hover:text-primary-lightest transition-colors duration-300 group overflow-visible"
+                    className="footer-link-item relative inline-block text-primary-lightest/50 hover:text-primary-lightest/70 transition-colors duration-300 group overflow-visible"
                   >
                     <span className="link-snowflake absolute left-0 top-1/2 -translate-y-1/2 opacity-0 origin-center">
                       <FontAwesomeIcon 
                         icon={faSnowflake} 
-                        className="text-primary-light text-sm"
+                        className="text-primary-light/60 text-sm"
                       />
                     </span>
                     <span className="relative z-10 block">{link.name}</span>
@@ -205,10 +205,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-primary-lightest font-semibold text-lg mb-4 flex items-center space-x-2">
+            <h3 className="text-white font-semibold text-lg mb-4 flex items-center space-x-2">
               <FontAwesomeIcon 
                 icon={footerLinks.informacoes.icon} 
-                className="text-primary-light text-sm"
+                className="text-primary-light/60 text-sm"
               />
               <span>{footerLinks.informacoes.title}</span>
             </h3>
@@ -217,12 +217,12 @@ export default function Footer() {
                 <li key={index}>
                   <a
                     href={link.href}
-                    className="footer-link-item relative inline-block text-primary-lightest/70 hover:text-primary-lightest transition-colors duration-300 group overflow-visible"
+                    className="footer-link-item relative inline-block text-primary-lightest/50 hover:text-primary-lightest/70 transition-colors duration-300 group overflow-visible"
                   >
                     <span className="link-snowflake absolute left-0 top-1/2 -translate-y-1/2 opacity-0 origin-center">
                       <FontAwesomeIcon 
                         icon={faSnowflake} 
-                        className="text-primary-light text-sm"
+                        className="text-primary-light/60 text-sm"
                       />
                     </span>
                     <span className="relative z-10 block">{link.name}</span>
@@ -233,10 +233,10 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-primary-lightest font-semibold text-lg mb-4 flex items-center space-x-2">
+            <h3 className="text-white font-semibold text-lg mb-4 flex items-center space-x-2">
               <FontAwesomeIcon 
                 icon={footerLinks.suporte.icon} 
-                className="text-primary-light text-sm"
+                className="text-primary-light/60 text-sm"
               />
               <span>{footerLinks.suporte.title}</span>
             </h3>
@@ -245,12 +245,12 @@ export default function Footer() {
                 <li key={index}>
                   <a
                     href={link.href}
-                    className="footer-link-item relative inline-block text-primary-lightest/70 hover:text-primary-lightest transition-colors duration-300 group overflow-visible"
+                    className="footer-link-item relative inline-block text-primary-lightest/50 hover:text-primary-lightest/70 transition-colors duration-300 group overflow-visible"
                   >
                     <span className="link-snowflake absolute left-0 top-1/2 -translate-y-1/2 opacity-0 origin-center">
                       <FontAwesomeIcon 
                         icon={faSnowflake} 
-                        className="text-primary-light text-sm"
+                        className="text-primary-light/60 text-sm"
                       />
                     </span>
                     <span className="relative z-10 block">{link.name}</span>
@@ -263,27 +263,27 @@ export default function Footer() {
         
         <div className="border-t border-primary-base/20 mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-primary-lightest/50 text-sm">
+            <p className="text-primary-lightest/40 text-sm">
               © {new Date().getFullYear()} SNW Store. Todos os direitos reservados.
             </p>
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <a 
                 href="#" 
-                className="text-primary-lightest/50 hover:text-primary-lightest transition-colors duration-300"
+                className="text-primary-lightest/40 hover:text-primary-lightest/60 transition-colors duration-300"
               >
                 Termos de Uso
               </a>
               <span className="text-primary-lightest/30">•</span>
               <a 
                 href="#" 
-                className="text-primary-lightest/50 hover:text-primary-lightest transition-colors duration-300"
+                className="text-primary-lightest/40 hover:text-primary-lightest/60 transition-colors duration-300"
               >
                 Política de Privacidade
               </a>
               <span className="text-primary-lightest/30">•</span>
               <a 
                 href="#" 
-                className="text-primary-lightest/50 hover:text-primary-lightest transition-colors duration-300"
+                className="text-primary-lightest/40 hover:text-primary-lightest/60 transition-colors duration-300"
               >
                 Cookies
               </a>

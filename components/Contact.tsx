@@ -9,9 +9,8 @@ import {
   faClock,
   faMapMarkerAlt,
   faHeadset,
-  faChevronDown,
-  faQuestionCircle,
   faShoppingCart,
+  faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons'
 import { faWhatsapp as faWhatsappBrand } from '@fortawesome/free-brands-svg-icons'
 
@@ -20,46 +19,69 @@ export default function Contact() {
   const titleRef = useRef<HTMLHeadingElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const dividerRef = useRef<HTMLDivElement>(null)
-  const faqRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
   const infoRef = useRef<HTMLDivElement>(null)
   const contactCardsRef = useRef<HTMLDivElement>(null)
 
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  const faqItems = [
-    {
-      question: 'Como faço para comprar um produto?',
-      answer: 'Navegue pela seção de produtos, escolha o item desejado e clique em "Ver Anúncio". Você será redirecionado para o Mercado Livre, onde poderá finalizar sua compra de forma segura.',
-    },
-    {
-      question: 'Os produtos são originais?',
-      answer: 'Sim! Todos os produtos oferecidos pela SNW Store são 100% originais e acompanham nota fiscal. Trabalhamos apenas com revendedores autorizados e verificados.',
-    },
-    {
-      question: 'Qual o prazo de entrega?',
-      answer: 'O prazo de entrega varia conforme o produto e a região. Geralmente, as entregas são realizadas em 5 a 15 dias úteis. O prazo exato será informado no momento da compra no Mercado Livre.',
-    },
-    {
-      question: 'Como funciona a garantia?',
-      answer: 'Todos os produtos possuem garantia do fabricante. Além disso, oferecemos suporte completo durante o período de garantia. Em caso de problemas, entre em contato conosco através dos canais disponíveis.',
-    },
-    {
-      question: 'Posso trocar ou devolver um produto?',
-      answer: 'Sim! Oferecemos política de troca e devolução conforme a legislação vigente. Você tem até 7 dias corridos após o recebimento para solicitar a troca ou devolução, desde que o produto esteja em perfeito estado.',
-    },
-    {
-      question: 'Quais formas de pagamento são aceitas?',
-      answer: 'No Mercado Livre, você pode pagar com cartão de crédito, débito, boleto bancário, PIX e Mercado Pago. Todas as transações são 100% seguras e protegidas.',
-    },
-    {
-      question: 'Como rastrear meu pedido?',
-      answer: 'Após a confirmação da compra, você receberá um código de rastreamento por email. Use esse código no site dos Correios ou na plataforma do Mercado Livre para acompanhar sua entrega em tempo real.',
-    },
-    {
-      question: 'Vocês oferecem suporte após a compra?',
-      answer: 'Sim! Nossa equipe está disponível para ajudar com qualquer dúvida ou problema relacionado ao seu pedido. Entre em contato através do email ou telefone disponíveis na seção de informações de contato.',
-    },
-  ]
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }))
+    if (submitError) setSubmitError(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitError(null)
+    setSubmitSuccess(false)
+    
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao enviar mensagem. Por favor, tente novamente.')
+      }
+
+      setSubmitSuccess(true)
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+      })
+
+      setTimeout(() => {
+        setSubmitSuccess(false)
+      }, 5000)
+
+    } catch (error: any) {
+      console.error('Form submission error:', error)
+      setSubmitError(error.message || 'Erro ao enviar mensagem. Por favor, tente novamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const contactInfo = [
     {
@@ -107,7 +129,7 @@ export default function Contact() {
       if (!titleRef.current || !subtitleRef.current || !dividerRef.current || !sectionRef.current) return
 
       const contactCards = Array.from(contactCardsRef.current?.querySelectorAll('.contact-info-card') || []) as HTMLElement[]
-      const faqItems = Array.from(faqRef.current?.querySelectorAll('.faq-item') || []) as HTMLElement[]
+      const formCard = formRef.current
       const infoCard = infoRef.current
 
       gsap.set(titleRef.current, { opacity: 0, y: 50, scale: 0.95 })
@@ -117,14 +139,9 @@ export default function Contact() {
         scaleX: 0,
         transformOrigin: 'center center'
       })
-      if (faqRef.current) {
-        gsap.set(faqRef.current, { opacity: 0, y: 60, scale: 0.95 })
+      if (formCard) {
+        gsap.set(formCard, { opacity: 0, y: 60, scale: 0.95 })
       }
-      gsap.set(faqItems, {
-        opacity: 0,
-        y: 40,
-        scale: 0.95
-      })
       if (infoCard) {
         gsap.set(infoCard, { opacity: 0, y: 60, scale: 0.95 })
       }
@@ -163,28 +180,14 @@ export default function Contact() {
             ease: 'power2.out'
           }, '-=0.5')
 
-          if (faqRef.current) {
-            tl.to(faqRef.current, {
+          if (formCard) {
+            tl.to(formCard, {
               opacity: 1,
               y: 0,
               scale: 1,
               duration: 1,
               ease: 'back.out(1.2)'
             }, '-=0.4')
-          }
-
-          if (faqItems.length > 0) {
-            tl.to(faqItems, {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              duration: 0.9,
-              ease: 'back.out(1.2)',
-              stagger: {
-                amount: 0.4,
-                from: 'start'
-              }
-            }, '-=0.6')
           }
 
           if (infoCard) {
@@ -194,7 +197,7 @@ export default function Contact() {
               scale: 1,
               duration: 1,
               ease: 'back.out(1.2)'
-            }, '-=0.8')
+            }, '-=0.6')
           }
 
           if (contactCards.length > 0) {
@@ -217,10 +220,6 @@ export default function Contact() {
 
     return () => ctx.revert()
   }, [])
-
-  const toggleFaq = (index: number) => {
-    setOpenFaqIndex(openFaqIndex === index ? null : index)
-  }
 
   return (
     <section
@@ -247,74 +246,123 @@ export default function Contact() {
             ref={subtitleRef}
             className="text-xl text-primary-lightest/70 max-w-3xl mx-auto leading-relaxed"
           >
-            Encontre respostas para as perguntas mais frequentes ou entre em contato conosco!
+            Tem alguma dúvida ou sugestão? Entre em contato conosco através do formulário abaixo ou pelos nossos canais de atendimento.
           </p>
           <div ref={dividerRef} className="divider-weak w-24 mx-auto mt-8" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
-          <div ref={faqRef} className="flex">
-            <div className="relative bg-gradient-to-br from-[#0D1118]/80 to-[#0D1118]/60 backdrop-blur-sm rounded-3xl p-8 md:p-10 border border-primary-base/30 overflow-hidden w-full flex flex-col">
+          <div className="flex">
+            <form
+              ref={formRef}
+              onSubmit={handleSubmit}
+              className="relative bg-gradient-to-br from-[#0D1118]/80 to-[#0D1118]/60 backdrop-blur-sm rounded-3xl p-8 md:p-10 border border-primary-base/30 overflow-hidden w-full flex flex-col"
+            >
               <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               
               <div className="relative z-10 flex flex-col h-full">
                 <div className="flex items-center mb-8">
                   <div className="text-3xl md:text-4xl mr-4 text-primary-light">
-                    <FontAwesomeIcon icon={faQuestionCircle} />
+                    <FontAwesomeIcon icon={faPaperPlane} />
                   </div>
                   <div>
                     <h3 className="text-2xl md:text-3xl font-bold text-white">
-                      Perguntas Frequentes
+                      Envie sua Mensagem
                     </h3>
                     <p className="text-sm text-primary-lightest/60 mt-1">
-                      Tire suas dúvidas aqui
+                      Preencha o formulário abaixo
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-4 flex-1 overflow-y-auto">
-                  {faqItems.map((faq, index) => (
-                    <div
-                      key={index}
-                      className="faq-item group relative bg-gradient-to-br from-[#0D1118]/70 to-[#0D1118]/50 backdrop-blur-sm rounded-2xl border border-primary-base/30 overflow-hidden transition-all duration-300"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      <button
-                        onClick={() => toggleFaq(index)}
-                        className="w-full p-5 text-left flex items-center justify-between relative z-10 hover:text-primary-lightest transition-colors duration-300"
-                      >
-                        <h4 className="text-base md:text-lg font-bold text-white pr-4 group-hover:text-primary-lightest transition-colors duration-300">
-                          {faq.question}
-                        </h4>
-                        <FontAwesomeIcon
-                          icon={faChevronDown}
-                          className={`text-primary-light text-sm flex-shrink-0 transition-transform duration-500 ease-in-out ${
-                            openFaqIndex === index ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
-                      
-                      <div
-                        className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                          openFaqIndex === index ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                        }`}
-                        style={{
-                          transitionProperty: 'max-height, opacity',
-                          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                      >
-                        <div className="px-5 pb-5 relative z-10">
-                          <p className="text-sm md:text-base text-primary-lightest/80 leading-relaxed">
-                            {faq.answer}
-                          </p>
-                        </div>
-                      </div>
+                <div className="space-y-6 flex-1">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-primary-lightest/80 mb-2">
+                      Nome
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 bg-[#0D1118]/50 border border-primary-base/30 rounded-xl text-white placeholder-primary-lightest/40 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300"
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-primary-lightest/80 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 bg-[#0D1118]/50 border border-primary-base/30 rounded-xl text-white placeholder-primary-lightest/40 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300"
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="subject" className="block text-sm font-medium text-primary-lightest/80 mb-2">
+                      Assunto
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 bg-[#0D1118]/50 border border-primary-base/30 rounded-xl text-white placeholder-primary-lightest/40 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300"
+                      placeholder="Assunto da mensagem"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-primary-lightest/80 mb-2">
+                      Mensagem
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      required
+                      rows={6}
+                      className="w-full px-4 py-3 bg-[#0D1118]/50 border border-primary-base/30 rounded-xl text-white placeholder-primary-lightest/40 focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300 resize-none"
+                      placeholder="Escreva sua mensagem aqui..."
+                    />
+                  </div>
+
+                  {submitError && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
+                      {submitError}
                     </div>
-                  ))}
+                  )}
+
+                  {submitSuccess && (
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-green-400 text-sm">
+                      Mensagem enviada com sucesso! Entraremos em contato em breve.
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="button-primary w-full py-4 px-6 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <FontAwesomeIcon icon={faPaperPlane} />
+                    <span>{isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}</span>
+                  </button>
                 </div>
               </div>
-            </div>
+            </form>
           </div>
 
           <div ref={infoRef} className="flex">

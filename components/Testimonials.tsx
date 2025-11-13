@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap, ScrollTrigger } from '@/lib/gsap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -9,60 +9,51 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 
+interface Testimonial {
+  id: string
+  name: string
+  role: string
+  rating: number
+  text: string
+  avatar_url: string
+}
+
 export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const sectionRef = useRef<HTMLElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const dividerRef = useRef<HTMLDivElement>(null)
   const testimonialsRef = useRef<HTMLDivElement>(null)
 
-  const testimonials = [
-    {
-      name: 'Maria Silva',
-      role: 'Cliente desde 2023',
-      rating: 5,
-      text: 'Produtos de excelente qualidade e entrega super rápida! A SNW Store sempre supera minhas expectativas. Recomendo muito!',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      name: 'João Santos',
-      role: 'Cliente desde 2022',
-      rating: 5,
-      text: 'Atendimento impecável e produtos originais. Sempre que preciso de algo, compro na SNW Store com total confiança.',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      name: 'Ana Costa',
-      role: 'Cliente desde 2023',
-      rating: 5,
-      text: 'Melhor loja online que já comprei! Preços justos, produtos de qualidade e suporte que realmente funciona 24/7.',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      name: 'Carlos Oliveira',
-      role: 'Cliente desde 2022',
-      rating: 5,
-      text: 'A SNW Store é sinônimo de confiança. Já fiz várias compras e nunca tive problemas. Entrega sempre no prazo!',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      name: 'Juliana Ferreira',
-      role: 'Cliente desde 2024',
-      rating: 5,
-      text: 'Adorei a experiência de compra! Site fácil de usar, produtos incríveis e atendimento muito atencioso.',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      name: 'Roberto Lima',
-      role: 'Cliente desde 2023',
-      rating: 5,
-      text: 'Produtos originais, preços competitivos e garantia real. A SNW Store é minha primeira opção para compras online.',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    },
-  ]
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/testimonials')
+        const result = await response.json()
+        
+        console.log('Testimonials API response:', result)
+        
+        if (result.success && result.data) {
+          setTestimonials(result.data)
+          console.log('Testimonials loaded:', result.data.length)
+        } else {
+          console.error('Testimonials API error:', result.error, result.details)
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || isLoading || testimonials.length === 0) return
 
     const ctx = gsap.context(() => {
       if (!titleRef.current || !subtitleRef.current || !dividerRef.current || !sectionRef.current) return
@@ -130,13 +121,13 @@ export default function Testimonials() {
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [isLoading, testimonials])
 
   return (
     <section
       ref={sectionRef}
       id="testimonials"
-      className="pt-24 pb-24 px-4 relative bg-white overflow-hidden"
+      className="pt-24 pb-24 px-4 relative bg-transparent overflow-hidden"
     >
       <div className="absolute inset-0 opacity-5 pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-light/30 rounded-full blur-3xl" />
@@ -162,65 +153,135 @@ export default function Testimonials() {
           <div ref={dividerRef} className="w-24 h-px bg-gradient-to-r from-transparent via-primary-base/30 to-transparent mx-auto mt-8" />
         </div>
 
-        <div
-          ref={testimonialsRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          {testimonials.map((testimonial, index) => (
-            <div
-              key={index}
-              className="testimonial-card group relative bg-white rounded-3xl p-8 border-2 border-gray-200 shadow-lg card-hover overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-light"></div>
+            <p className="mt-4 text-gray-600">Carregando depoimentos...</p>
+          </div>
+        ) : testimonials.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Nenhum depoimento disponível no momento.</p>
+          </div>
+        ) : (
+          <div
+            ref={testimonialsRef}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {testimonials.map((testimonial, index) => {
+            const gradients = [
+              'linear-gradient(135deg, rgba(153, 226, 242, 0.18) 0%, rgba(48, 169, 217, 0.12) 50%, rgba(153, 226, 242, 0.15) 100%)',
+              'linear-gradient(135deg, rgba(48, 169, 217, 0.15) 0%, rgba(2, 56, 89, 0.1) 50%, rgba(48, 169, 217, 0.12) 100%)',
+              'linear-gradient(135deg, rgba(153, 226, 242, 0.15) 0%, rgba(48, 169, 217, 0.1) 50%, rgba(153, 226, 242, 0.18) 100%)',
+              'linear-gradient(135deg, rgba(2, 56, 89, 0.12) 0%, rgba(48, 169, 217, 0.15) 50%, rgba(153, 226, 242, 0.12) 100%)',
+              'linear-gradient(135deg, rgba(153, 226, 242, 0.18) 0%, rgba(48, 169, 217, 0.12) 50%, rgba(2, 56, 89, 0.08) 100%)',
+              'linear-gradient(135deg, rgba(48, 169, 217, 0.12) 0%, rgba(153, 226, 242, 0.15) 50%, rgba(48, 169, 217, 0.1) 100%)',
+            ]
+            
+            return (
+              <div
+                key={index}
+                className="testimonial-card group relative rounded-3xl p-8 card-hover overflow-hidden"
+                style={{
+                  background: gradients[index % gradients.length],
+                  border: '1px solid rgba(48, 169, 217, 0.2)',
+                  boxShadow: '0 8px 32px rgba(48, 169, 217, 0.06), 0 0 15px rgba(48, 169, 217, 0.04)',
+                }}
+              >
+                <div 
+                  className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 0%, rgba(48, 169, 217, 0.12) 0%, transparent 70%)',
+                  }}
+                />
+
+                <div 
+                  className="absolute inset-0 rounded-3xl opacity-[0.02] pointer-events-none"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(48, 169, 217, 0.2) 1px, transparent 0)',
+                    backgroundSize: '40px 40px',
+                  }}
+                />
+
+                <div 
+                  className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{
+                    boxShadow: 'inset 0 0 30px rgba(48, 169, 217, 0.15), 0 0 40px rgba(48, 169, 217, 0.1)',
+                  }}
+                />
               
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-1">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <FontAwesomeIcon
-                        key={i}
-                        icon={faStar}
-                        className="text-yellow-400 text-sm"
-                      />
-                    ))}
-                  </div>
-                  <FontAwesomeIcon
-                    icon={faQuoteLeft}
-                    className="text-primary-light/30 text-3xl"
-                  />
-                </div>
-
-                <p className="text-gray-700 leading-relaxed text-base mb-6 group-hover:text-gray-900 transition-colors duration-300">
-                  &ldquo;{testimonial.text}&rdquo;
-                </p>
-
-                <div className="flex items-center space-x-4">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary-light/20 group-hover:ring-primary-light/40 transition-all duration-300">
-                    <Image
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      fill
-                      className="object-cover"
-                      sizes="48px"
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-1">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <FontAwesomeIcon
+                          key={i}
+                          icon={faStar}
+                          className="text-yellow-400 text-sm"
+                          style={{
+                            filter: 'drop-shadow(0 0 2px rgba(234, 179, 8, 0.3))',
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FontAwesomeIcon
+                      icon={faQuoteLeft}
+                      className="text-3xl transition-colors duration-300"
+                      style={{
+                        color: '#30A9D9',
+                        opacity: 0.3,
+                      }}
                     />
                   </div>
-                  <div>
-                    <h4 className="text-lg font-bold text-gray-900 group-hover:text-primary-light transition-colors duration-300">
-                      {testimonial.name}
-                    </h4>
-                    <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
-                      {testimonial.role}
-                    </p>
+
+                  <p 
+                    className="leading-relaxed text-base mb-6 transition-colors duration-300"
+                    style={{
+                      color: '#2a2a2a',
+                    }}
+                  >
+                    &ldquo;{testimonial.text}&rdquo;
+                  </p>
+
+                  <div className="flex items-center space-x-4">
+                    <div 
+                      className="relative w-12 h-12 rounded-full overflow-hidden transition-all duration-300"
+                      style={{
+                        boxShadow: '0 0 0 2px rgba(48, 169, 217, 0.2)',
+                      }}
+                    >
+                      <Image
+                        src={testimonial.avatar_url}
+                        alt={testimonial.name}
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    </div>
+                    <div>
+                      <h4 
+                        className="text-lg font-bold transition-colors duration-300"
+                        style={{
+                          color: '#023859',
+                        }}
+                      >
+                        {testimonial.name}
+                      </h4>
+                      <p 
+                        className="text-sm transition-colors duration-300"
+                        style={{
+                          color: '#4a4a4a',
+                        }}
+                      >
+                        {testimonial.role}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-light/10 via-transparent to-transparent" />
-              </div>
-            </div>
-          ))}
-        </div>
+            )
+          })}
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-24" />
