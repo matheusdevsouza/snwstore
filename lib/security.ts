@@ -79,22 +79,48 @@ export function validateOrigin(request: NextRequest): boolean {
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
   
-  const allowedOrigins = [
-    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-    'http://localhost:3000',
-    'https://localhost:3000',
-  ]
-
   if (process.env.NODE_ENV === 'development') {
     return true
   }
 
+  const allowedOrigins: string[] = []
+  
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    allowedOrigins.push(process.env.NEXT_PUBLIC_SITE_URL)
+  }
+  
+  allowedOrigins.push('http://localhost:3000', 'https://localhost:3000')
+  
+  const vercelUrl = process.env.VERCEL_URL
+  if (vercelUrl) {
+    allowedOrigins.push(`https://${vercelUrl}`)
+  }
+  
+  const vercelCustomDomain = process.env.VERCEL_CUSTOM_DOMAIN
+  if (vercelCustomDomain) {
+    allowedOrigins.push(`https://${vercelCustomDomain}`)
+  }
+  
   if (origin) {
-    return allowedOrigins.some(allowed => origin.startsWith(allowed))
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      return true
+    }
+    if (origin.includes('.vercel.app')) {
+      return true
+    }
   }
 
   if (referer) {
-    return allowedOrigins.some(allowed => referer.startsWith(allowed))
+    if (allowedOrigins.some(allowed => referer.startsWith(allowed))) {
+      return true
+    }
+    if (referer.includes('.vercel.app')) {
+      return true
+    }
+  }
+
+  if (!origin && !referer) {
+    return true
   }
 
   return false
