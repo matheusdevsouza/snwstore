@@ -2382,7 +2382,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                         Seção Sobre
                       </h1>
                     </div>
-                    <p className="text-primary-lightest/70 text-lg">Gerencie o conteúdo da seção "Sobre Nós"</p>
+                    <p className="text-primary-lightest/70 text-lg">Gerencie o conteúdo da seção &quot;Sobre Nós&quot;</p>
                   </div>
                   <button
                     onClick={handleSaveAboutContent}
@@ -2634,7 +2634,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                 {contactInfo.length === 0 ? (
                   <div className="w-full flex items-center justify-center py-12">
                     <div className="text-center max-w-md text-primary-lightest/60">
-                      Nenhuma informação de contato cadastrada. Clique em "Adicionar Item" para começar.
+                      Nenhuma informação de contato cadastrada. Clique em &quot;Adicionar Item&quot; para começar.
                     </div>
                   </div>
                 ) : (
