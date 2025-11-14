@@ -46,13 +46,13 @@ export default function Home() {
 
   return (
     <SmoothScroll>
-      <main className="min-h-screen bg-[#0D1118]">
+      <main className="min-h-screen bg-[#0D1118] w-full overflow-x-hidden">
         <Header />
         <Hero />
         <Features />
         <Products />
         
-        <div className="relative bg-white">
+        <div className="relative bg-white w-full overflow-x-hidden">
 
           <div className="absolute inset-0 pointer-events-none z-[5]">
             <Image

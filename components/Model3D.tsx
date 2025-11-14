@@ -374,7 +374,11 @@ export default function Model3D() {
       className="w-full h-full"
       style={{ 
         background: 'transparent',
-        position: 'relative'
+        position: 'relative',
+        ...(isMobile && {
+          pointerEvents: 'none',
+          touchAction: 'pan-y'
+        })
       }}
     >
       <Canvas
@@ -393,9 +397,14 @@ export default function Model3D() {
           height: '100%',
           cursor: 'grab'
         }}
-        onCreated={({ gl }) => {        
-          gl.domElement.style.pointerEvents = 'auto'
-          gl.domElement.style.touchAction = 'none'
+        onCreated={({ gl }) => {
+          if (isMobile) {
+            gl.domElement.style.pointerEvents = 'none'
+            gl.domElement.style.touchAction = 'pan-y'
+          } else {
+            gl.domElement.style.pointerEvents = 'auto'
+            gl.domElement.style.touchAction = 'none'
+          }
           
           if (typeof gl.domElement.releasePointerCapture === 'function') {
             const originalReleasePointerCapture = gl.domElement.releasePointerCapture.bind(gl.domElement)

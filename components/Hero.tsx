@@ -252,11 +252,6 @@ export default function Hero() {
               </div>
             </div>
 
-            <div className="md:hidden w-full flex justify-center -mt-8">
-              <div className="w-full max-w-[400px] h-[400px] relative pointer-events-auto">
-                <Model3D />
-              </div>
-            </div>
           </div>
 
           <div ref={logoRef} className="hidden md:flex flex-1 justify-center md:justify-end min-h-[500px] w-full md:w-auto pointer-events-none">

@@ -217,6 +217,12 @@
   height: 60px;
 }
 
+@media (max-width: 767px) {
+  .custom-shape-divider-bottom-1762731302 svg {
+    height: 30px;
+  }
+}
+
 .custom-shape-divider-bottom-1762731302 .shape-fill {
   fill: #0D1118;
 }
@@ -236,6 +242,12 @@
   display: block;
   width: calc(100% + 1.3px);
   height: 60px;
+}
+
+@media (max-width: 767px) {
+  .custom-shape-divider-top-1762751137 svg {
+    height: 30px;
+  }
 }
 
 .custom-shape-divider-top-1762751137 .shape-fill {

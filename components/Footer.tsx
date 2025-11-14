@@ -145,8 +145,8 @@ export default function Footer() {
     <footer ref={footerRef} className="bg-[#0D1118] border-t border-primary-base/20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-2">
-            <div className="flex items-center space-x-3 mb-4">
+          <div className="lg:col-span-2 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start space-x-3 mb-4">
               <div className="relative w-14 h-14">
                 <Image
                   src="/snow-logo.png"
@@ -160,7 +160,7 @@ export default function Footer() {
               Sua revenda confiável no Mercado Livre. Produtos de qualidade
               com os melhores preços e entrega rápida.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex justify-center md:justify-start space-x-4">
               {socialLinks.map((social, index) => (
                 <a
                   key={index}
@@ -176,7 +176,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
+          <div className="bg-white/5 md:bg-transparent rounded-lg p-4 md:p-0">
             <h3 className="text-white font-semibold text-lg mb-4 flex items-center space-x-2">
               <FontAwesomeIcon 
                 icon={footerLinks.produtos.icon} 
@@ -204,7 +204,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="bg-white/5 md:bg-transparent rounded-lg p-4 md:p-0">
             <h3 className="text-white font-semibold text-lg mb-4 flex items-center space-x-2">
               <FontAwesomeIcon 
                 icon={footerLinks.informacoes.icon} 
@@ -232,7 +232,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="bg-white/5 md:bg-transparent rounded-lg p-4 md:p-0">
             <h3 className="text-white font-semibold text-lg mb-4 flex items-center space-x-2">
               <FontAwesomeIcon 
                 icon={footerLinks.suporte.icon} 

@@ -185,20 +185,20 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out w-full overflow-x-hidden ${
         isScrolled
           ? 'bg-[#0D1118]/85 backdrop-blur-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-b border-primary-light/5'
           : 'bg-[#0D1118]/30 backdrop-blur-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.2)] border-b border-primary-light/5'
       }`}
     >
       
-      <nav className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center z-10">
+      <nav className="container mx-auto px-4 sm:px-6 py-4 max-w-full overflow-x-hidden">
+        <div className="flex items-center justify-between w-full min-w-0">
+          <div className="flex items-center z-10 flex-shrink-0 min-w-0">
             <a
               href="#home"
               onClick={(e) => handleNavClick(e, '#home')}
-              className="flex items-center space-x-3 relative cursor-pointer"
+              className="flex items-center space-x-3 relative cursor-pointer flex-shrink-0"
             >
               <div
                 ref={logoRef}
@@ -303,9 +303,9 @@ export default function Header() {
 
           <button
             className="lg:hidden relative w-10 h-10 rounded-lg bg-primary-base/20 backdrop-blur-sm
-                     border border-primary-light/20 flex items-center justify-center
+                     border border-primary-light/20 flex items-center justify-center flex-shrink-0
                      text-primary-lightest hover:text-white hover:bg-primary-base/30
-                     transition-all duration-300 hover:scale-110"
+                     transition-all duration-300 hover:scale-110 ml-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -318,7 +318,7 @@ export default function Header() {
       </nav>
 
       <div
-        className={`lg:hidden absolute top-full left-0 right-0 overflow-hidden transition-all duration-500 ease-in-out
+        className={`lg:hidden absolute top-full left-0 right-0 overflow-hidden transition-all duration-500 ease-in-out w-full
           ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
         style={{
           background: 'linear-gradient(180deg, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.98) 100%)',
@@ -327,7 +327,7 @@ export default function Header() {
           boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
         }}
       >
-        <div className="container mx-auto px-6 py-6">
+        <div className="container mx-auto px-4 sm:px-6 py-6 max-w-full overflow-x-hidden">
           <ul className="space-y-2">
             {navItems.map((item, index) => {
               const isActive = activeSection === item.id
