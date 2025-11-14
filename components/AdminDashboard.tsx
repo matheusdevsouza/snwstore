@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -33,10 +33,13 @@ import {
   faThumbtack,
   faCheck,
   faCheckCircle,
-  faEnvelopeOpen
+  faEnvelopeOpen,
+  faInfoCircle,
+  faSave
 } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 import CategoryModal from './CategoryModal'
+import { availableIcons, getIconByName } from '@/lib/available-icons'
 
 interface User {
   id: string
@@ -104,14 +107,19 @@ interface Category {
 export default function AdminDashboard({ user }: { user: User }) {
   const router = useRouter()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeTab, setActiveTab] = useState<'products' | 'testimonials' | 'messages' | 'stats' | 'categories' | 'logs'>('stats')
+  const [activeTab, setActiveTab] = useState<'products' | 'testimonials' | 'messages' | 'stats' | 'categories' | 'logs' | 'about' | 'contact'>('stats')
 
-  const formatNumber = (num: number): string => {
+  const formatNumber = (num: number | null | undefined): string => {
+    if (num === null || num === undefined || isNaN(num)) {
+      return '0'
+    }
     if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')}M`
+      const millions = num / 1000000
+      return millions % 1 === 0 ? `${millions}M` : `${millions.toFixed(1).replace(/\.0$/, '')}M`
     }
     if (num >= 1000) {
-      return `${(num / 1000).toFixed(1).replace(/\.0$/, '')}K`
+      const thousands = num / 1000
+      return thousands % 1 === 0 ? `${thousands}K` : `${thousands.toFixed(1).replace(/\.0$/, '')}K`
     }
     return num.toString()
   }
@@ -130,8 +138,20 @@ export default function AdminDashboard({ user }: { user: User }) {
   const [showProductModal, setShowProductModal] = useState(false)
   const [showTestimonialModal, setShowTestimonialModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [deleteConfirmData, setDeleteConfirmData] = useState<{ type: string; id: string; name: string } | null>(null)
   const [editingItem, setEditingItem] = useState<Product | Testimonial | Category | null>(null)
+  const [editingContactItem, setEditingContactItem] = useState<any | null>(null)
   const [viewingMessage, setViewingMessage] = useState<ContactMessage | null>(null)
+  const [testimonialsEnabled, setTestimonialsEnabled] = useState(true)
+  const [aboutSectionEnabled, setAboutSectionEnabled] = useState(true)
+  const [aboutSectionContent, setAboutSectionContent] = useState<any[]>([])
+  const [editingAboutCard, setEditingAboutCard] = useState<any | null>(null)
+  const [openIconPickers, setOpenIconPickers] = useState<Record<string, boolean>>({})
+  const [contactInfo, setContactInfo] = useState<any[]>([])
+  const [openContactIconPickers, setOpenContactIconPickers] = useState<Record<string, boolean>>({})
+  const [contactSectionEnabled, setContactSectionEnabled] = useState(true)
   
   const [productFilters, setProductFilters] = useState({
     category: 'all',
@@ -169,10 +189,29 @@ export default function AdminDashboard({ user }: { user: User }) {
           console.error('Admin Products API error:', data.error, data.details)
         }
       } else if (activeTab === 'testimonials') {
-        const response = await fetch('/api/testimonials', { credentials: 'include' })
+        const response = await fetch('/api/testimonials?includeInactive=true', { credentials: 'include' })
         const data = await response.json()
         if (data.success) {
           setTestimonials(data.data || [])
+        }
+        const settingsResponse = await fetch('/api/admin/settings', { credentials: 'include' })
+        const settingsData = await settingsResponse.json()
+        if (settingsData.success) {
+          setTestimonialsEnabled(settingsData.data.testimonials_enabled)
+        }
+      } else if (activeTab === 'about') {
+        const response = await fetch('/api/admin/about-section', { credentials: 'include' })
+        const data = await response.json()
+        if (data.success) {
+          setAboutSectionContent(data.data.content || [])
+          setAboutSectionEnabled(data.data.enabled !== false)
+        }
+      } else if (activeTab === 'contact') {
+        const response = await fetch('/api/admin/contact-info', { credentials: 'include' })
+        const data = await response.json()
+        if (data.success) {
+          setContactInfo(data.data.items || [])
+          setContactSectionEnabled(data.data.enabled !== false)
         }
       } else if (activeTab === 'messages') {
         const response = await fetch('/api/admin/messages', { credentials: 'include' })
@@ -270,11 +309,17 @@ export default function AdminDashboard({ user }: { user: User }) {
     }
   }
 
-  const handleDelete = async (type: 'product' | 'testimonial' | 'category' | 'message', id: string) => {
+  const handleDelete = async (type: 'product' | 'testimonial' | 'category' | 'message', id: string, name?: string) => {
     const itemName = type === 'product' ? 'produto' : type === 'testimonial' ? 'depoimento' : type === 'category' ? 'categoria' : 'mensagem'
-    const confirmMessage = `Tem certeza que deseja EXCLUIR PERMANENTEMENTE este ${itemName}? Esta ação não pode ser desfeita.`
-    
-    if (!confirm(confirmMessage)) return
+    setDeleteConfirmData({ type, id, name: name || itemName })
+    setShowDeleteConfirmModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmData) return
+
+    const { type, id } = deleteConfirmData
+    const itemName = type === 'product' ? 'produto' : type === 'testimonial' ? 'depoimento' : type === 'category' ? 'categoria' : 'mensagem'
 
     try {
       const endpoint = type === 'product' 
@@ -291,6 +336,8 @@ export default function AdminDashboard({ user }: { user: User }) {
 
       if (response.ok) {
         loadData()
+        setShowDeleteConfirmModal(false)
+        setDeleteConfirmData(null)
       } else {
         const errorData = await response.json()
         alert(`Erro ao excluir: ${errorData.error || 'Erro desconhecido'}`)
@@ -343,6 +390,250 @@ export default function AdminDashboard({ user }: { user: User }) {
     }
   }
 
+  const handleToggleTestimonialsSection = async () => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ testimonials_enabled: !testimonialsEnabled })
+      })
+
+      if (response.ok) {
+        setTestimonialsEnabled(!testimonialsEnabled)
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao ${testimonialsEnabled ? 'desativar' : 'ativar'} seção: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Toggle testimonials section error:', error)
+      alert('Erro ao alterar status da seção. Por favor, tente novamente.')
+    }
+  }
+
+  const handleToggleAboutSection = async () => {
+    try {
+      const response = await fetch('/api/admin/about-section', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ enabled: !aboutSectionEnabled })
+      })
+
+      if (response.ok) {
+        setAboutSectionEnabled(!aboutSectionEnabled)
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao ${aboutSectionEnabled ? 'desativar' : 'ativar'} seção: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Toggle about section error:', error)
+      alert('Erro ao alterar status da seção. Por favor, tente novamente.')
+    }
+  }
+
+  const handleSaveAboutContent = async () => {
+    try {
+      const response = await fetch('/api/admin/about-section', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: aboutSectionContent })
+      })
+
+      if (response.ok) {
+        alert('Conteúdo salvo com sucesso!')
+        loadData()
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao salvar conteúdo: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Save about content error:', error)
+      alert('Erro ao salvar conteúdo. Por favor, tente novamente.')
+    }
+  }
+
+  const handleToggleContactItemStatus = async (itemId: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus
+      
+      const updatedInfo = [...contactInfo]
+      const index = updatedInfo.findIndex(i => i.id === itemId)
+      if (index >= 0) {
+        updatedInfo[index] = { ...updatedInfo[index], is_active: newStatus }
+      }
+
+      const activeCount = updatedInfo.filter(item => item.is_active).length
+      
+      if (newStatus && activeCount > 6) {
+        alert('Máximo de 6 itens ativos permitidos. Desative outro item primeiro.')
+        return
+      }
+
+      setContactInfo(updatedInfo)
+
+      const response = await fetch('/api/admin/contact-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ items: updatedInfo })
+      })
+
+      if (!response.ok) {
+        const revertedInfo = [...contactInfo]
+        const revertIndex = revertedInfo.findIndex(i => i.id === itemId)
+        if (revertIndex >= 0) {
+          revertedInfo[revertIndex] = { ...revertedInfo[revertIndex], is_active: currentStatus }
+          setContactInfo(revertedInfo)
+        }
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Falha ao salvar')
+      }
+
+      loadData()
+    } catch (error: any) {
+      console.error('Toggle contact item status error:', error)
+      alert(error.message || 'Erro ao alterar status do item. Por favor, tente novamente.')
+    }
+  }
+
+  const handleSaveContactInfo = async () => {
+    try {
+      const activeCount = contactInfo.filter(item => item.is_active).length
+      if (activeCount > 6) {
+        alert('Máximo de 6 itens ativos permitidos. Desative alguns itens antes de salvar.')
+        return
+      }
+
+      const response = await fetch('/api/admin/contact-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ items: contactInfo })
+      })
+
+      if (response.ok) {
+        alert('Informações de contato salvas com sucesso!')
+        loadData()
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao salvar informações: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Save contact info error:', error)
+      alert('Erro ao salvar informações. Por favor, tente novamente.')
+    }
+  }
+
+  const handleToggleContactSection = async () => {
+    try {
+      const response = await fetch('/api/admin/contact-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ enabled: !contactSectionEnabled })
+      })
+
+      if (response.ok) {
+        setContactSectionEnabled(!contactSectionEnabled)
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao ${contactSectionEnabled ? 'desativar' : 'ativar'} seção: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Toggle contact section error:', error)
+      alert('Erro ao alterar status da seção. Por favor, tente novamente.')
+    }
+  }
+
+  const handleAddContactItem = () => {
+    const activeCount = contactInfo.filter(item => item.is_active).length
+    if (activeCount >= 6) {
+      alert('Máximo de 6 itens ativos permitidos. Desative alguns itens antes de adicionar novos.')
+      return
+    }
+
+    setEditingContactItem({
+      id: null,
+      title: '',
+      description: '',
+      icon_name: 'faPhone',
+      link: '',
+      display_order: contactInfo.length,
+      is_active: true
+    })
+    setShowContactModal(true)
+  }
+
+  const handleEditContactItem = (item: any) => {
+    setEditingContactItem(item)
+    setShowContactModal(true)
+  }
+
+  const handleSaveContactItem = async () => {
+    if (!editingContactItem) return
+
+    if (!editingContactItem.title || !editingContactItem.description || !editingContactItem.icon_name) {
+      alert('Por favor, preencha todos os campos obrigatórios (título, descrição e ícone).')
+      return
+    }
+
+    const activeCount = contactInfo.filter(item => item.is_active && item.id !== editingContactItem.id).length
+    if (editingContactItem.is_active && activeCount >= 6) {
+      alert('Máximo de 6 itens ativos permitidos. Desative outro item primeiro.')
+      return
+    }
+
+    try {
+      const updatedInfo = [...contactInfo]
+      const index = updatedInfo.findIndex(item => item.id === editingContactItem.id)
+      
+      if (index >= 0) {
+        updatedInfo[index] = editingContactItem
+      } else {
+        updatedInfo.push(editingContactItem)
+      }
+
+      setContactInfo(updatedInfo)
+      setShowContactModal(false)
+      setEditingContactItem(null)
+    } catch (error) {
+      console.error('Save contact item error:', error)
+      alert('Erro ao salvar item. Por favor, tente novamente.')
+    }
+  }
+
+  const handleDeleteContactItem = async (id: string, name?: string) => {
+    const item = contactInfo.find(item => item.id === id)
+    setDeleteConfirmData({ type: 'contact', id, name: name || item?.title || 'item de contato' })
+    setShowDeleteConfirmModal(true)
+  }
+
+  const confirmDeleteContactItem = async () => {
+    if (!deleteConfirmData || deleteConfirmData.type !== 'contact') return
+
+    try {
+      const response = await fetch(`/api/admin/contact-info?id=${deleteConfirmData.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        setContactInfo(contactInfo.filter(item => item.id !== deleteConfirmData.id))
+        setShowDeleteConfirmModal(false)
+        setDeleteConfirmData(null)
+        loadData()
+      } else {
+        const errorData = await response.json()
+        alert(`Erro ao excluir: ${errorData.error || 'Erro desconhecido'}`)
+      }
+    } catch (error) {
+      console.error('Delete contact info error:', error)
+      alert('Erro ao excluir informação. Por favor, tente novamente.')
+    }
+  }
+
   const handleToggleStatus = async (type: 'product' | 'testimonial' | 'category', id: string, currentStatus: boolean) => {
     try {
       const endpoint = type === 'product' 
@@ -358,10 +649,27 @@ export default function AdminDashboard({ user }: { user: User }) {
       })
 
       if (response.ok) {
+        if (type === 'testimonial') {
+          setTestimonials(prev => prev.map(t => 
+            t.id === id ? { ...t, is_active: !currentStatus } : t
+          ))
+          if (testimonialFilters.status === 'active') {
+            setTestimonialFilters({ ...testimonialFilters, status: 'all' })
+          }
+        } else if (type === 'product') {
+          setProducts(prev => prev.map(p => 
+            p.id === id ? { ...p, is_active: !currentStatus } : p
+          ))
+        } else if (type === 'category') {
+          setCategories(prev => prev.map(c => 
+            c.id === id ? { ...c, is_active: !currentStatus } : c
+          ))
+        }
         loadData()
       }
     } catch (error) {
       console.error('Toggle error:', error)
+      alert('Erro ao alterar status. Por favor, tente novamente.')
     }
   }
 
@@ -399,6 +707,9 @@ export default function AdminDashboard({ user }: { user: User }) {
       Math.floor(t.rating) === parseInt(testimonialFilters.rating)
     
     return matchesSearch && matchesStatus && matchesFeatured && matchesRating
+  }).sort((a, b) => {
+    if (a.is_active === b.is_active) return 0
+    return a.is_active ? -1 : 1
   })
 
   const filteredMessages = messages.filter(m => {
@@ -444,7 +755,7 @@ export default function AdminDashboard({ user }: { user: User }) {
   const activeProducts = products.filter(p => p.is_active).length
   const activeTestimonials = testimonials.filter(t => t.is_active).length
 
-  const navCategories = [
+  const navCategories = useMemo(() => [
     {
       title: 'Visão Geral',
       items: [
@@ -456,7 +767,6 @@ export default function AdminDashboard({ user }: { user: User }) {
       items: [
         { id: 'products', label: 'Produtos', icon: faBox, badge: products.length },
         { id: 'categories', label: 'Categorias', icon: faTags, badge: categories.length },
-        { id: 'testimonials', label: 'Depoimentos', icon: faComments, badge: testimonials.length },
         { id: 'logs', label: 'Logs', icon: faListAlt, badge: analyticsLogs.length },
       ]
     },
@@ -466,7 +776,15 @@ export default function AdminDashboard({ user }: { user: User }) {
         { id: 'messages', label: 'Mensagens', icon: faEnvelope, badge: messages.length, unread: unreadMessages },
       ]
     },
-  ]
+    {
+      title: 'Conteúdo',
+      items: [
+        { id: 'testimonials', label: 'Depoimentos', icon: faComments, badge: testimonials.length },
+        { id: 'about', label: 'Sobre', icon: faInfoCircle, badge: null },
+        { id: 'contact', label: 'Contato', icon: faEnvelope, badge: null },
+      ]
+    },
+  ], [products.length, categories.length, testimonials.length, analyticsLogs.length, messages.length, unreadMessages])
 
   const ProductCardComponent = ({ product, isInactive, onToggleStatus, onEdit, onDelete }: { product: Product; isInactive: boolean; onToggleStatus: (type: 'product', id: string, currentStatus: boolean) => void; onEdit: () => void; onDelete: () => void }) => {
     return (
@@ -690,7 +1008,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                             }`}>
                               {(item as any).unread && (item as any).unread > 0 
                                 ? formatNumber((item as any).unread) 
-                                : formatNumber(item.badge)}
+                                : formatNumber(item.badge as number)}
                             </span>
                           )}
                         </div>
@@ -712,7 +1030,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                         }`}>
                           {(item as any).unread && (item as any).unread > 0 
                             ? formatNumber((item as any).unread) 
-                            : formatNumber(item.badge)}
+                            : formatNumber(item.badge as number)}
                         </span>
                       )}
                     </button>
@@ -722,45 +1040,36 @@ export default function AdminDashboard({ user }: { user: User }) {
             ))}
           </nav>
 
-          <div className={`relative z-10 mt-auto pt-6 border-t border-primary-base/20 space-y-3 ${isSidebarCollapsed ? 'px-2' : 'px-6'}`}>
+          <div className={`relative z-10 mt-auto pt-6 border-t border-primary-base/20 ${isSidebarCollapsed ? 'px-2 pb-4' : 'px-6 pb-6'}`}>
             {!isSidebarCollapsed ? (
-              <>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-light to-primary-base flex items-center justify-center text-white font-bold text-lg">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+              <div className="p-4 rounded-xl border border-primary-base/30 bg-[#0D1118]/40">
+                <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                    <p className="text-xs text-primary-lightest/70 truncate">{user.email}</p>
                     <div className="mt-1 flex items-center space-x-1">
                       <div className="w-2 h-2 rounded-full bg-green-400"></div>
                       <span className="text-xs text-primary-lightest/60">Online</span>
                     </div>
                   </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-center p-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-300 flex-shrink-0"
+                    title="Sair"
+                  >
+                    <FontAwesomeIcon icon={faSignOutAlt} className="text-lg" />
+                  </button>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-300"
-                >
-                  <FontAwesomeIcon icon={faSignOutAlt} />
-                  <span>Sair</span>
-                </button>
-              </>
+              </div>
             ) : (
-              <>
-                <div className="flex items-center justify-center mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-light to-primary-base flex items-center justify-center text-white font-bold text-base">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                </div>
+              <div className="flex flex-col items-center space-y-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center px-2 py-3 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-300"
+                  className="w-full flex items-center justify-center px-2 py-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all duration-300"
                   title="Sair"
                 >
                   <FontAwesomeIcon icon={faSignOutAlt} className="text-lg" />
                 </button>
-              </>
+              </div>
             )}
           </div>
         </aside>
@@ -1216,7 +1525,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                           {filteredProducts.filter(p => p.is_active).map((product) => (
-                            <ProductCardComponent key={product.id} product={product} isInactive={false} onToggleStatus={handleToggleStatus} onEdit={() => { setEditingItem(product); setShowProductModal(true); }} onDelete={() => handleDelete('product', product.id)} />
+                            <ProductCardComponent key={product.id} product={product} isInactive={false} onToggleStatus={handleToggleStatus} onEdit={() => { setEditingItem(product); setShowProductModal(true); }} onDelete={() => handleDelete('product', product.id, product.name)} />
                           ))}
                         </div>
                       </div>
@@ -1230,7 +1539,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                           {filteredProducts.filter(p => !p.is_active).map((product) => (
-                            <ProductCardComponent key={product.id} product={product} isInactive={true} onToggleStatus={handleToggleStatus} onEdit={() => { setEditingItem(product); setShowProductModal(true); }} onDelete={() => handleDelete('product', product.id)} />
+                            <ProductCardComponent key={product.id} product={product} isInactive={true} onToggleStatus={handleToggleStatus} onEdit={() => { setEditingItem(product); setShowProductModal(true); }} onDelete={() => handleDelete('product', product.id, product.name)} />
                           ))}
                         </div>
                       </div>
@@ -1270,6 +1579,36 @@ export default function AdminDashboard({ user }: { user: User }) {
                     <FontAwesomeIcon icon={faPlus} />
                     <span>Novo Depoimento</span>
                   </button>
+                </div>
+
+                <div className="mb-6 p-6 rounded-2xl border border-primary-base/30"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.08) 0%, rgba(48, 169, 217, 0.05) 50%, rgba(2, 56, 89, 0.03) 100%)',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-2">Visibilidade da Seção de Depoimentos</h3>
+                      <p className="text-primary-lightest/70">
+                        {testimonialsEnabled 
+                          ? 'A seção de depoimentos está visível no site para todos os visitantes'
+                          : 'A seção de depoimentos está oculta no site'
+                        }
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleTestimonialsSection}
+                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-light/50 focus:ring-offset-2 focus:ring-offset-[#0D1118] ${
+                        testimonialsEnabled ? 'bg-primary-light' : 'bg-primary-base/50'
+                      } cursor-pointer`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
+                          testimonialsEnabled ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mb-6">
@@ -1377,81 +1716,112 @@ export default function AdminDashboard({ user }: { user: User }) {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredTestimonials.map((testimonial) => (
-                      <div
-                        key={testimonial.id}
-                        className="group relative rounded-2xl p-6 card-hover"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.12) 0%, rgba(48, 169, 217, 0.08) 50%, rgba(2, 56, 89, 0.05) 100%)',
-                          border: '1px solid rgba(48, 169, 217, 0.2)',
-                        }}
-                      >
-                        <div className="relative z-10 flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-14 h-14 rounded-xl overflow-hidden ring-2 ring-primary-light/30 group-hover:ring-primary-light/50 transition-all duration-300">
-                              <Image
-                                src={testimonial.avatar_url}
-                                alt={testimonial.name}
-                                width={56}
-                                height={56}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-white group-hover:text-primary-lightest transition-colors duration-300 text-lg">{testimonial.name}</h3>
-                              <p className="text-sm text-primary-lightest/60 group-hover:text-primary-lightest/80 transition-colors duration-300">{testimonial.role}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-center gap-0.5 rounded-lg backdrop-blur-sm border p-0.5 bg-[#0D1118]/80 border-primary-base/30">
-                            <button
-                              onClick={() => handleToggleStatus('testimonial', testimonial.id, testimonial.is_active)}
-                              className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
-                              title={testimonial.is_active ? 'Desativar' : 'Ativar'}
-                            >
-                              <FontAwesomeIcon
-                                icon={testimonial.is_active ? faEye : faEyeSlash}
-                                className="text-primary-light transition-colors duration-300 text-xs"
-                              />
-                            </button>
-                            <div className="w-px h-4 bg-primary-base/30" />
-                            <button
-                              onClick={() => {
-                                setEditingItem(testimonial)
-                                setShowTestimonialModal(true)
+                    {filteredTestimonials.map((testimonial) => {
+                      const isInactive = !testimonial.is_active
+                      
+                      return (
+                        <div
+                          key={testimonial.id}
+                          className="group relative rounded-2xl p-6 card-hover"
+                          style={{
+                            background: isInactive 
+                              ? 'linear-gradient(135deg, rgba(100, 100, 100, 0.12) 0%, rgba(60, 60, 60, 0.08) 50%, rgba(30, 30, 30, 0.05) 100%)'
+                              : 'linear-gradient(135deg, rgba(153, 226, 242, 0.12) 0%, rgba(48, 169, 217, 0.08) 50%, rgba(2, 56, 89, 0.05) 100%)',
+                            border: isInactive 
+                              ? '1px solid rgba(100, 100, 100, 0.2)'
+                              : '1px solid rgba(48, 169, 217, 0.2)',
+                          }}
+                        >
+                          {!isInactive && (
+                            <div 
+                              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                              style={{
+                                background: 'radial-gradient(circle at 50% 0%, rgba(48, 169, 217, 0.12) 0%, transparent 70%)',
                               }}
-                              className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
-                              title="Editar"
-                            >
-                              <FontAwesomeIcon 
-                                icon={faEdit} 
-                                className="text-xs text-primary-light transition-colors duration-300"
-                              />
-                            </button>
-                            <div className="w-px h-4 bg-primary-base/30" />
-                            <button
-                              onClick={() => handleDelete('testimonial', testimonial.id)}
-                              className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
-                              title="Excluir"
-                            >
-                              <FontAwesomeIcon 
-                                icon={faTrash} 
-                                className="text-xs text-primary-light transition-colors duration-300"
-                              />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="relative z-10 flex items-center space-x-1 mb-3">
-                          {[...Array(5)].map((_, i) => (
-                            <FontAwesomeIcon
-                              key={i}
-                              icon={faStar}
-                              className={`text-sm transition-all duration-300 ${i < testimonial.rating ? 'text-yellow-400 group-hover:scale-110' : 'text-gray-600'}`}
                             />
-                          ))}
+                          )}
+
+                          <div className="relative z-10 flex items-start justify-between mb-4">
+                            <div className="flex items-center space-x-4">
+                              <div className={`w-14 h-14 rounded-xl overflow-hidden transition-all duration-300 ${
+                                isInactive 
+                                  ? 'ring-2 ring-gray-600/30' 
+                                  : 'ring-2 ring-primary-light/30 group-hover:ring-primary-light/50'
+                              }`}>
+                                <Image
+                                  src={testimonial.avatar_url}
+                                  alt={testimonial.name}
+                                  width={56}
+                                  height={56}
+                                  className={`w-full h-full object-cover transition-all duration-300 ${isInactive ? 'grayscale opacity-70' : ''}`}
+                                />
+                              </div>
+                              <div>
+                                <h3 className={`font-bold transition-colors duration-300 text-lg ${isInactive ? 'text-gray-400' : 'text-white group-hover:text-primary-lightest'}`}>{testimonial.name}</h3>
+                                <p className={`text-sm transition-colors duration-300 ${isInactive ? 'text-gray-500' : 'text-primary-lightest/60 group-hover:text-primary-lightest/80'}`}>{testimonial.role}</p>
+                              </div>
+                            </div>
+                            <div className={`flex items-center justify-center gap-0.5 rounded-lg backdrop-blur-sm border p-0.5 ${
+                              isInactive
+                                ? 'bg-gray-800/80 border-gray-600/30'
+                                : 'bg-[#0D1118]/80 border-primary-base/30'
+                            }`}>
+                              <button
+                                onClick={() => handleToggleStatus('testimonial', testimonial.id, testimonial.is_active)}
+                                className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
+                                title={testimonial.is_active ? 'Desativar' : 'Ativar'}
+                              >
+                                <FontAwesomeIcon
+                                  icon={testimonial.is_active ? faEye : faEyeSlash}
+                                  className={`${isInactive ? 'text-gray-400' : 'text-primary-light'} transition-colors duration-300 text-xs`}
+                                />
+                              </button>
+                              <div className={`w-px h-4 ${isInactive ? 'bg-gray-600/30' : 'bg-primary-base/30'}`} />
+                              <button
+                                onClick={() => {
+                                  setEditingItem(testimonial)
+                                  setShowTestimonialModal(true)
+                                }}
+                                className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
+                                title="Editar"
+                              >
+                                <FontAwesomeIcon 
+                                  icon={faEdit} 
+                                  className={`text-xs ${isInactive ? 'text-gray-400' : 'text-primary-light'} transition-colors duration-300`}
+                                />
+                              </button>
+                              <div className={`w-px h-4 ${isInactive ? 'bg-gray-600/30' : 'bg-primary-base/30'}`} />
+                              <button
+                                onClick={() => handleDelete('testimonial', testimonial.id, testimonial.name)}
+                                className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
+                                title="Excluir"
+                              >
+                                <FontAwesomeIcon 
+                                  icon={faTrash} 
+                                  className={`text-xs ${isInactive ? 'text-gray-400' : 'text-primary-light'} transition-colors duration-300`}
+                                />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="relative z-10 flex items-center space-x-1 mb-3">
+                            {[...Array(5)].map((_, i) => (
+                              <FontAwesomeIcon
+                                key={i}
+                                icon={faStar}
+                                className={`text-sm transition-all duration-300 ${
+                                  i < testimonial.rating 
+                                    ? isInactive 
+                                      ? 'text-gray-500' 
+                                      : 'text-yellow-400 group-hover:scale-110' 
+                                    : 'text-gray-600'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <p className={`relative z-10 text-sm line-clamp-3 transition-colors duration-300 ${isInactive ? 'text-gray-500' : 'text-primary-lightest/80 group-hover:text-primary-lightest'}`}>{testimonial.text}</p>
                         </div>
-                        <p className="relative z-10 text-primary-lightest/80 group-hover:text-primary-lightest text-sm line-clamp-3 transition-colors duration-300">{testimonial.text}</p>
-                      </div>
-                    ))}
+                      )
+                    })}
                     {filteredTestimonials.length === 0 && (
                       <div className="text-center py-12 text-primary-lightest/60 col-span-2">
                         Nenhum depoimento encontrado
@@ -1650,7 +2020,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                                   )}
                                   <div className="w-px h-4 bg-primary-base/30" />
                                   <button
-                                    onClick={() => handleDelete('message', message.id)}
+                                    onClick={() => handleDelete('message', message.id, message.subject || 'mensagem')}
                                     className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
                                     title="Excluir"
                                   >
@@ -1751,7 +2121,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                             )}
                             <div className="w-px h-4 bg-primary-base/30" />
                             <button
-                              onClick={() => handleDelete('message', message.id)}
+                              onClick={() => handleDelete('message', message.id, message.subject || 'mensagem')}
                               className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
                               title="Excluir"
                             >
@@ -1957,7 +2327,7 @@ export default function AdminDashboard({ user }: { user: User }) {
                                 </button>
                                 <div className={`w-px h-4 ${isInactive ? 'bg-gray-600/30' : 'bg-primary-base/30'}`} />
                                 <button
-                                  onClick={() => handleDelete('category', category.id)}
+                                  onClick={() => handleDelete('category', category.id, category.name)}
                                   className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
                                   title="Excluir"
                                 >
@@ -1995,6 +2365,379 @@ export default function AdminDashboard({ user }: { user: User }) {
                         Nenhuma categoria encontrada
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'about' && (
+              <div>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                  <div>
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="text-5xl text-primary-light">
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                      </div>
+                      <h1 className="text-4xl md:text-5xl font-bold text-primary-light">
+                        Seção Sobre
+                      </h1>
+                    </div>
+                    <p className="text-primary-lightest/70 text-lg">Gerencie o conteúdo da seção "Sobre Nós"</p>
+                  </div>
+                  <button
+                    onClick={handleSaveAboutContent}
+                    className="button-primary flex items-center space-x-2"
+                  >
+                    <FontAwesomeIcon icon={faSave} />
+                    <span>Salvar Alterações</span>
+                  </button>
+                </div>
+
+                <div className="mb-6 p-6 rounded-2xl border border-primary-base/30"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.08) 0%, rgba(48, 169, 217, 0.05) 50%, rgba(2, 56, 89, 0.03) 100%)',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-2">Visibilidade da Seção Sobre</h3>
+                      <p className="text-primary-lightest/70">
+                        {aboutSectionEnabled 
+                          ? 'A seção "Sobre" está visível no site para todos os visitantes'
+                          : 'A seção "Sobre" está oculta no site'
+                        }
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleAboutSection}
+                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-light/50 focus:ring-offset-2 focus:ring-offset-[#0D1118] ${
+                        aboutSectionEnabled ? 'bg-primary-light' : 'bg-primary-base/50'
+                      } cursor-pointer`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
+                          aboutSectionEnabled ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {aboutSectionContent.map((card, index) => {
+                    const isMainCard = card.card_key === 'nossa_historia' || card.card_key === 'nossa_missao'
+                    const showIconPicker = openIconPickers[card.card_key] || false
+
+                    return (
+                      <div
+                        key={card.id || card.card_key}
+                        className="p-6 rounded-2xl border border-primary-base/30"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.12) 0%, rgba(48, 169, 217, 0.08) 50%, rgba(2, 56, 89, 0.05) 100%)',
+                        }}
+                      >
+                        <div className="mb-4">
+                          <h3 className="text-2xl font-bold text-white mb-2">{card.title || 'Card sem título'}</h3>
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="relative">
+                              <button
+                                onClick={() => setOpenIconPickers({ ...openIconPickers, [card.card_key]: !showIconPicker })}
+                                className="p-3 rounded-xl border border-primary-base/30 bg-primary-base/20 hover:bg-primary-base/30 transition-colors"
+                                style={{
+                                  background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.15) 0%, rgba(48, 169, 217, 0.1) 50%, rgba(2, 56, 89, 0.08) 100%)',
+                                }}
+                              >
+                                <FontAwesomeIcon 
+                                  icon={getIconByName(card.icon_name || 'faHistory')} 
+                                  className="text-2xl text-primary-light"
+                                />
+                              </button>
+                              {showIconPicker && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setOpenIconPickers({ ...openIconPickers, [card.card_key]: false })}
+                                  />
+                                  <div className="absolute top-full left-0 mt-2 p-6 rounded-2xl border border-primary-base/30 bg-[#0D1118] z-50 w-[600px] max-h-[500px] overflow-y-auto shadow-2xl"
+                                    style={{
+                                      background: 'linear-gradient(135deg, rgba(13, 17, 24, 0.98) 0%, rgba(2, 56, 89, 0.95) 100%)',
+                                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="mb-4">
+                                      <h4 className="text-lg font-bold text-white mb-1">Selecione um Ícone</h4>
+                                      <p className="text-sm text-primary-lightest/60">Clique em um ícone para selecioná-lo</p>
+                                    </div>
+                                    <div className="grid grid-cols-8 gap-3">
+                                      {availableIcons.map((icon) => (
+                                        <button
+                                          key={icon.name}
+                                          onClick={() => {
+                                            const updatedContent = [...aboutSectionContent]
+                                            updatedContent[index] = { ...updatedContent[index], icon_name: icon.name }
+                                            setAboutSectionContent(updatedContent)
+                                            setOpenIconPickers({ ...openIconPickers, [card.card_key]: false })
+                                          }}
+                                          className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[70px] ${
+                                            card.icon_name === icon.name
+                                              ? 'border-primary-light bg-primary-light/20 scale-105'
+                                              : 'border-primary-base/30 bg-primary-base/10 hover:bg-primary-base/20 hover:border-primary-base/50 hover:scale-105'
+                                          }`}
+                                          title={icon.label}
+                                        >
+                                          <FontAwesomeIcon 
+                                            icon={icon.icon} 
+                                            className={`text-2xl mb-1 ${
+                                              card.icon_name === icon.name ? 'text-primary-light' : 'text-primary-lightest/70'
+                                            }`}
+                                          />
+                                          <span className={`text-[10px] text-center leading-tight ${
+                                            card.icon_name === icon.name ? 'text-primary-light' : 'text-primary-lightest/50'
+                                          }`}>
+                                            {icon.label}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-sm text-primary-lightest/70 mb-2">Título</label>
+                              <input
+                                type="text"
+                                value={card.title || ''}
+                                onChange={(e) => {
+                                  const updatedContent = [...aboutSectionContent]
+                                  updatedContent[index] = { ...updatedContent[index], title: e.target.value }
+                                  setAboutSectionContent(updatedContent)
+                                }}
+                                className="w-full px-4 py-2 rounded-xl text-white bg-primary-base/20 border border-primary-base/30 focus:outline-none focus:ring-2 focus:ring-primary-light/30"
+                                placeholder="Título do card"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm text-primary-lightest/70 mb-2">
+                              Descrição Principal {isMainCard && '(texto maior)'}
+                            </label>
+                            <textarea
+                              value={card.description || ''}
+                              onChange={(e) => {
+                                const updatedContent = [...aboutSectionContent]
+                                updatedContent[index] = { ...updatedContent[index], description: e.target.value }
+                                setAboutSectionContent(updatedContent)
+                              }}
+                              rows={4}
+                              className="w-full px-4 py-2 rounded-xl text-white bg-primary-base/20 border border-primary-base/30 focus:outline-none focus:ring-2 focus:ring-primary-light/30 resize-none"
+                              placeholder="Descrição principal do card"
+                            />
+                          </div>
+
+                          {isMainCard && (
+                            <div>
+                              <label className="block text-sm text-primary-lightest/70 mb-2">
+                                Descrição Secundária (texto menor)
+                              </label>
+                              <textarea
+                                value={card.additional_description || ''}
+                                onChange={(e) => {
+                                  const updatedContent = [...aboutSectionContent]
+                                  updatedContent[index] = { ...updatedContent[index], additional_description: e.target.value }
+                                  setAboutSectionContent(updatedContent)
+                                }}
+                                rows={3}
+                                className="w-full px-4 py-2 rounded-xl text-white bg-primary-base/20 border border-primary-base/30 focus:outline-none focus:ring-2 focus:ring-primary-light/30 resize-none"
+                                placeholder="Descrição secundária do card"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'contact' && (
+              <div>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                  <div>
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="text-5xl text-primary-light">
+                        <FontAwesomeIcon icon={faEnvelope} />
+                      </div>
+                      <h1 className="text-4xl md:text-5xl font-bold text-primary-light">
+                        Informações de Contato
+                      </h1>
+                    </div>
+                    <p className="text-primary-lightest/70 text-lg">Gerencie as informações de contato exibidas na seção de contato</p>
+                    <p className="text-primary-lightest/50 text-sm mt-1">
+                      Máximo de 6 itens ativos permitidos. Atualmente: {contactInfo.filter(item => item.is_active).length} ativos
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAddContactItem}
+                      className="button-primary flex items-center space-x-2"
+                      disabled={contactInfo.filter(item => item.is_active).length >= 6}
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      <span>Adicionar Item</span>
+                    </button>
+                    <button
+                      onClick={handleSaveContactInfo}
+                      className="button-primary flex items-center space-x-2"
+                    >
+                      <FontAwesomeIcon icon={faSave} />
+                      <span>Salvar Alterações</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mb-6 p-6 rounded-2xl border border-primary-base/30"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.08) 0%, rgba(48, 169, 217, 0.05) 50%, rgba(2, 56, 89, 0.03) 100%)',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-2">Visibilidade da Seção de Contato</h3>
+                      <p className="text-primary-lightest/70">
+                        {contactSectionEnabled 
+                          ? 'A seção "Contato" está visível no site para todos os visitantes'
+                          : 'A seção "Contato" está oculta no site'
+                        }
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleContactSection}
+                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-light/50 focus:ring-offset-2 focus:ring-offset-[#0D1118] ${
+                        contactSectionEnabled ? 'bg-primary-light' : 'bg-primary-base/50'
+                      } cursor-pointer`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
+                          contactSectionEnabled ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {contactInfo.length === 0 ? (
+                  <div className="w-full flex items-center justify-center py-12">
+                    <div className="text-center max-w-md text-primary-lightest/60">
+                      Nenhuma informação de contato cadastrada. Clique em "Adicionar Item" para começar.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {contactInfo.map((item) => {
+                      const activeCount = contactInfo.filter(i => i.is_active).length
+                      const isInactive = !item.is_active
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="group relative rounded-2xl p-6 card-hover"
+                          style={{
+                            background: isInactive 
+                              ? 'linear-gradient(135deg, rgba(100, 100, 100, 0.12) 0%, rgba(60, 60, 60, 0.08) 50%, rgba(30, 30, 30, 0.05) 100%)'
+                              : 'linear-gradient(135deg, rgba(153, 226, 242, 0.12) 0%, rgba(48, 169, 217, 0.08) 50%, rgba(2, 56, 89, 0.05) 100%)',
+                            border: isInactive 
+                              ? '1px solid rgba(100, 100, 100, 0.2)'
+                              : '1px solid rgba(48, 169, 217, 0.2)',
+                          }}
+                        >
+                          {!isInactive && (
+                            <div 
+                              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                              style={{
+                                background: 'radial-gradient(circle at 50% 0%, rgba(48, 169, 217, 0.12) 0%, transparent 70%)',
+                              }}
+                            />
+                          )}
+
+                          <div className="relative z-10 flex items-start justify-between mb-4">
+                            <div className="flex items-center space-x-4">
+                              <div className={`p-3 rounded-xl border transition-all duration-300 ${
+                                isInactive 
+                                  ? 'border-gray-600/30 bg-gray-700/30' 
+                                  : 'border-primary-base/30'
+                              }`}
+                                style={!isInactive ? {
+                                  background: 'linear-gradient(135deg, rgba(153, 226, 242, 0.15) 0%, rgba(48, 169, 217, 0.1) 50%, rgba(2, 56, 89, 0.08) 100%)',
+                                } : {}}
+                              >
+                                <FontAwesomeIcon 
+                                  icon={getIconByName(item.icon_name || 'faPhone')} 
+                                  className={`text-2xl transition-colors duration-300 ${isInactive ? 'text-gray-400' : 'text-primary-light'}`}
+                                />
+                              </div>
+                              <div>
+                                <h3 className={`text-lg font-bold mb-1 transition-colors duration-300 ${isInactive ? 'text-gray-400' : 'text-white'}`}>{item.title}</h3>
+                                <p className={`text-sm transition-colors duration-300 ${isInactive ? 'text-gray-500' : 'text-primary-lightest/70'}`}>{item.description}</p>
+                                {item.link && (
+                                  <a 
+                                    href={item.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className={`text-xs transition-colors mt-1 inline-block ${isInactive ? 'text-gray-500' : 'text-primary-light hover:text-primary-lightest'}`}
+                                  >
+                                    {item.link}
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                            <div className={`flex items-center justify-center gap-0.5 rounded-lg backdrop-blur-sm border p-0.5 ${
+                              isInactive
+                                ? 'bg-gray-800/80 border-gray-600/30'
+                                : 'bg-[#0D1118]/80 border-primary-base/30'
+                            }`}>
+                              <button
+                                onClick={() => handleToggleContactItemStatus(item.id, item.is_active)}
+                                className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
+                                title={item.is_active ? 'Desativar' : 'Ativar'}
+                              >
+                                <FontAwesomeIcon
+                                  icon={item.is_active ? faEye : faEyeSlash}
+                                  className={`${isInactive ? 'text-gray-400' : 'text-primary-light'} transition-colors duration-300 text-xs`}
+                                />
+                              </button>
+                              <div className={`w-px h-4 ${isInactive ? 'bg-gray-600/30' : 'bg-primary-base/30'}`} />
+                              <button
+                                onClick={() => handleEditContactItem(item)}
+                                className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
+                                title="Editar"
+                              >
+                                <FontAwesomeIcon 
+                                  icon={faEdit} 
+                                  className={`text-xs ${isInactive ? 'text-gray-400' : 'text-primary-light'} transition-colors duration-300`}
+                                />
+                              </button>
+                              <div className={`w-px h-4 ${isInactive ? 'bg-gray-600/30' : 'bg-primary-base/30'}`} />
+                              <button
+                                onClick={() => handleDeleteContactItem(item.id, item.title)}
+                                className="p-1.5 rounded-md transition-all duration-300 hover:scale-110 hover:bg-primary-light/20 flex items-center justify-center"
+                                title="Excluir"
+                              >
+                                <FontAwesomeIcon 
+                                  icon={faTrash} 
+                                  className={`text-xs ${isInactive ? 'text-gray-400' : 'text-primary-light'} transition-colors duration-300`}
+                                />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -2342,8 +3085,48 @@ export default function AdminDashboard({ user }: { user: User }) {
             }
           }}
           onDelete={() => {
-            handleDelete('message', viewingMessage.id)
+            handleDelete('message', viewingMessage.id, viewingMessage.subject || 'mensagem')
             setViewingMessage(null)
+          }}
+        />
+      )}
+
+      {showContactModal && editingContactItem && (
+        <ContactItemModal
+          item={editingContactItem}
+          onClose={() => {
+            setShowContactModal(false)
+            setEditingContactItem(null)
+          }}
+          onSave={(savedItem) => {
+            const updatedInfo = [...contactInfo]
+            const index = updatedInfo.findIndex(i => i.id === savedItem.id)
+            if (index >= 0) {
+              updatedInfo[index] = savedItem
+            } else {
+              updatedInfo.push(savedItem)
+            }
+            setContactInfo(updatedInfo)
+            setShowContactModal(false)
+            setEditingContactItem(null)
+          }}
+        />
+      )}
+
+      {showDeleteConfirmModal && deleteConfirmData && (
+        <DeleteConfirmModal
+          itemName={deleteConfirmData.name}
+          itemType={deleteConfirmData.type}
+          onConfirm={() => {
+            if (deleteConfirmData.type === 'contact') {
+              confirmDeleteContactItem()
+            } else {
+              confirmDelete()
+            }
+          }}
+          onCancel={() => {
+            setShowDeleteConfirmModal(false)
+            setDeleteConfirmData(null)
           }}
         />
       )}
@@ -3236,6 +4019,291 @@ function MessageViewModal({
                 Excluir
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ContactItemModal({ item, onClose, onSave }: { item: any; onClose: () => void; onSave: (item: any) => void }) {
+  const [formData, setFormData] = useState({
+    title: item?.title || '',
+    description: item?.description || '',
+    icon_name: item?.icon_name || 'faPhone',
+    link: item?.link || '',
+    display_order: item?.display_order?.toString() || '0',
+    is_active: item?.is_active !== undefined ? item.is_active : true
+  })
+  const [showIconPicker, setShowIconPicker] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!formData.title || !formData.description || !formData.icon_name) {
+      setError('Por favor, preencha todos os campos obrigatórios (título, descrição e ícone).')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const savedItem = {
+        ...item,
+        ...formData,
+        display_order: parseInt(formData.display_order),
+        id: item.id || null
+      }
+      onSave(savedItem)
+    } catch (error) {
+      console.error('Save contact item error:', error)
+      setError('Erro ao salvar item. Por favor, tente novamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#0D1118]/95 backdrop-blur-md border border-primary-base/30 rounded-2xl max-w-5xl w-full max-h-[90vh] shadow-2xl relative overflow-hidden flex flex-col">
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-light/20 rounded-full blur-3xl" />
+        </div>
+        
+        <div 
+          className="relative z-10 flex-shrink-0 p-8 pb-4 backdrop-blur-md border-b border-primary-base/20"
+          style={{
+            background: 'linear-gradient(135deg, rgba(48, 169, 217, 0.15) 0%, rgba(2, 56, 89, 0.1) 50%, rgba(48, 169, 217, 0.12) 100%)',
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white">
+                {item.id ? 'Editar Item de Contato' : 'Novo Item de Contato'}
+              </h2>
+              <p className="text-sm text-primary-lightest/60 mt-1">
+                {item.id ? 'Atualize as informações do item de contato' : 'Adicione um novo item de contato'}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-primary-lightest/60 hover:text-white transition-colors hover:scale-110"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="relative z-10 space-y-4 p-8 pt-6">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-primary-lightest/80 mb-2">Ícone *</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowIconPicker(!showIconPicker)}
+                  className="w-full p-6 rounded-xl border border-primary-base/30 bg-[#0D1118]/60 backdrop-blur-sm hover:bg-[#0D1118]/80 transition-all duration-300 flex items-center justify-center"
+                >
+                  <FontAwesomeIcon 
+                    icon={getIconByName(formData.icon_name)} 
+                    className="text-4xl text-primary-light"
+                  />
+                </button>
+                {showIconPicker && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowIconPicker(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-2 p-6 rounded-2xl border border-primary-base/30 bg-[#0D1118] z-50 w-full max-w-[600px] max-h-[500px] overflow-y-auto shadow-2xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(13, 17, 24, 0.98) 0%, rgba(2, 56, 89, 0.95) 100%)',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="mb-4">
+                        <h4 className="text-lg font-bold text-white mb-1">Selecione um Ícone</h4>
+                        <p className="text-sm text-primary-lightest/60">Clique em um ícone para selecioná-lo</p>
+                      </div>
+                      <div className="grid grid-cols-8 gap-3">
+                        {availableIcons.map((icon) => (
+                          <button
+                            key={icon.name}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, icon_name: icon.name })
+                              setShowIconPicker(false)
+                            }}
+                            className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[70px] ${
+                              formData.icon_name === icon.name
+                                ? 'border-primary-light bg-primary-light/20 scale-105'
+                                : 'border-primary-base/30 bg-primary-base/10 hover:bg-primary-base/20 hover:border-primary-base/50 hover:scale-105'
+                            }`}
+                            title={icon.label}
+                          >
+                            <FontAwesomeIcon 
+                              icon={icon.icon} 
+                              className={`text-2xl mb-1 ${
+                                formData.icon_name === icon.name ? 'text-primary-light' : 'text-primary-lightest/70'
+                              }`}
+                            />
+                            <span className={`text-[10px] text-center leading-tight ${
+                              formData.icon_name === icon.name ? 'text-primary-light' : 'text-primary-lightest/50'
+                            }`}>
+                              {icon.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-primary-lightest/80 mb-2">Título *</label>
+              <input
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-4 py-2 bg-[#0D1118]/60 backdrop-blur-sm border border-primary-base/30 rounded-xl text-white focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300 placeholder:text-primary-lightest/20"
+                placeholder="Título (ex: Telefone, Email)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-primary-lightest/80 mb-2">Descrição *</label>
+              <textarea
+                required
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-4 py-2 bg-[#0D1118]/60 backdrop-blur-sm border border-primary-base/30 rounded-xl text-white focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 resize-none transition-all duration-300 placeholder:text-primary-lightest/20"
+                placeholder="Descrição (ex: (11) 99999-9999)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-primary-lightest/80 mb-2">Link (opcional)</label>
+              <input
+                type="text"
+                value={formData.link}
+                onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                className="w-full px-4 py-2 bg-[#0D1118]/60 backdrop-blur-sm border border-primary-base/30 rounded-xl text-white focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300 placeholder:text-primary-lightest/20"
+                placeholder="Link (ex: tel:+5511999999999, mailto:email@exemplo.com, https://...)"
+              />
+              <p className="text-xs text-primary-lightest/50 mt-2">
+                Deixe vazio se não houver link. Use tel: para telefone, mailto: para email, ou https:// para URLs.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-primary-lightest/80 mb-2">Ordem de Exibição</label>
+              <input
+                type="number"
+                value={formData.display_order}
+                onChange={(e) => setFormData({ ...formData, display_order: e.target.value })}
+                className="w-full px-4 py-2 bg-[#0D1118]/60 backdrop-blur-sm border border-primary-base/30 rounded-xl text-white focus:outline-none focus:border-primary-light focus:ring-2 focus:ring-primary-light/20 transition-all duration-300 placeholder:text-primary-lightest/20"
+                placeholder="0"
+              />
+            </div>
+
+            <div className="flex items-center space-x-6">
+              <label className="flex items-center space-x-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="custom-checkbox"
+                />
+                <span className="text-primary-lightest/80 group-hover:text-white transition-colors duration-300 font-medium">Ativo</span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end space-x-4 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 text-primary-lightest/60 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="button-primary disabled:opacity-50"
+              >
+                {isSubmitting ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeleteConfirmModal({ itemName, itemType, onConfirm, onCancel }: { itemName: string; itemType: string; onConfirm: () => void; onCancel: () => void }) {
+  const itemTypeName = itemType === 'product' ? 'produto' : itemType === 'testimonial' ? 'depoimento' : itemType === 'category' ? 'categoria' : itemType === 'message' ? 'mensagem' : 'item de contato'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="relative w-full max-w-md rounded-2xl border border-red-500/20 overflow-hidden backdrop-blur-md"
+        style={{
+          background: 'rgba(13, 17, 24, 0.85)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+        }}
+      >
+        <div className="relative z-10 p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+              <FontAwesomeIcon icon={faTrash} className="text-xl text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white mb-1">Confirmar Exclusão</h2>
+              <p className="text-sm text-gray-400">Esta ação não pode ser desfeita</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-gray-300 text-base leading-relaxed mb-3">
+              Tem certeza que deseja excluir permanentemente este {itemTypeName}?
+            </p>
+            {itemName && (
+              <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10">
+                <p className="text-sm text-gray-400 mb-1">Item:</p>
+                <p className="text-white font-medium">{itemName}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 px-6 py-2.5 rounded-xl bg-gray-700/30 border border-gray-600/30 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 font-medium"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="flex-1 px-6 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200 font-medium"
+            >
+              Excluir
+            </button>
           </div>
         </div>
       </div>

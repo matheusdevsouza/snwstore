@@ -7,9 +7,9 @@ import {
   faShippingFast,
   faShieldAlt,
   faHeadset,
-  faMedal,
+  faTag,
   faCreditCard,
-  faBoxOpen,
+  faCheckCircle,
 } from '@fortawesome/free-solid-svg-icons'
 
 const features = [
@@ -29,9 +29,9 @@ const features = [
     description: 'Atendimento dedicado para resolver suas dúvidas a qualquer hora',
   },
   {
-    icon: faMedal,
-    title: 'Produtos Originais',
-    description: '100% originais com nota fiscal e garantia do fabricante',
+    icon: faTag,
+    title: 'Preços Competitivos',
+    description: 'Os melhores preços do mercado para você economizar em suas compras',
   },
   {
     icon: faCreditCard,
@@ -39,9 +39,9 @@ const features = [
     description: 'Aceitamos todas as formas de pagamento com parcelamento',
   },
   {
-    icon: faBoxOpen,
-    title: 'Troca Fácil',
-    description: 'Política de troca e devolução simples e descomplicada',
+    icon: faCheckCircle,
+    title: 'Qualidade Garantida',
+    description: 'Produtos selecionados de forma rigorosa para garantir a melhor qualidade',
   },
 ]
 

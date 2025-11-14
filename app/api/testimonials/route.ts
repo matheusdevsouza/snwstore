@@ -6,13 +6,28 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const featured = searchParams.get('featured')
+    const includeInactive = searchParams.get('includeInactive') === 'true'
     const limit = parseInt(searchParams.get('limit') || '100')
     const offset = parseInt(searchParams.get('offset') || '0')
+
+    let isAuthenticated = false
+    try {
+      const { requireAuth } = await import('@/lib/auth-middleware')
+      const authResult = await requireAuth(request)
+      isAuthenticated = authResult.authorized
+    } catch {
+      isAuthenticated = false
+    }
 
     let query = supabaseAdmin
       .from('testimonials')
       .select('*')
-      .eq('is_active', true)
+
+    if (!isAuthenticated && !includeInactive) {
+      query = query.eq('is_active', true)
+    }
+
+    query = query
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)

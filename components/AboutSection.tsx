@@ -1,16 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { gsap, ScrollTrigger } from '@/lib/gsap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {
-  faUsers,
-  faRocket,
-  faHeart,
-  faBullseye,
-  faHistory,
-  faFlagCheckered,
-} from '@fortawesome/free-solid-svg-icons'
+import { getIconByName } from '@/lib/available-icons'
 
 export default function AboutSection() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -20,47 +13,47 @@ export default function AboutSection() {
   const mainCardsRef = useRef<HTMLDivElement>(null)
   const valuesTitleRef = useRef<HTMLHeadingElement>(null)
   const valuesRef = useRef<HTMLDivElement>(null)
-
-  const mainContent = [
-    {
-      icon: faHistory,
-      title: 'Nossa História',
-      description: 'A SNW Store nasceu com a missão de trazer os melhores produtos e experiências para nossos clientes. Desde o início, acreditamos que qualidade, transparência e compromisso são os pilares de um negócio de sucesso.',
-      additionalText: 'Ao longo dos anos, construímos uma comunidade de clientes satisfeitos que confiam em nós para suas necessidades. Cada produto que oferecemos passa por rigoroso controle de qualidade, garantindo originalidade e excelência.',
-    },
-    {
-      icon: faFlagCheckered,
-      title: 'Nossa Missão',
-      description: 'Proporcionar aos nossos clientes acesso aos melhores produtos do mercado, com preços justos, entrega rápida e um atendimento excepcional que supera expectativas.',
-      additionalText: 'Queremos ser mais que uma loja - queremos ser seu parceiro de confiança, oferecendo soluções que realmente fazem a diferença no seu dia a dia.',
-    },
-  ]
-
-  const values = [
-    {
-      icon: faUsers,
-      title: 'Compromisso com o Cliente',
-      description: 'Colocamos nossos clientes em primeiro lugar, sempre buscando superar expectativas e oferecer a melhor experiência de compra.',
-    },
-    {
-      icon: faRocket,
-      title: 'Inovação Constante',
-      description: 'Estamos sempre em busca das últimas tendências e tecnologias para oferecer produtos de ponta e soluções modernas.',
-    },
-    {
-      icon: faHeart,
-      title: 'Paixão pelo que Fazemos',
-      description: 'Amamos o que fazemos e isso se reflete em cada produto, cada atendimento e cada detalhe do nosso trabalho.',
-    },
-    {
-      icon: faBullseye,
-      title: 'Excelência em Qualidade',
-      description: 'Não medimos esforços para garantir que cada produto atenda aos mais altos padrões de qualidade e originalidade.',
-    },
-  ]
+  const [content, setContent] = useState<any[]>([])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    const fetchContent = async () => {
+      try {
+        const response = await fetch('/api/settings/about-section-content', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+        const data = await response.json()
+        if (data.success && Array.isArray(data.content)) {
+          setContent(data.content)
+        }
+      } catch (error) {
+        console.error('Error fetching about section content:', error)
+      }
+    }
+    fetchContent()
+  }, [])
+
+  const mainContent = content.filter(card => 
+    card.card_key === 'nossa_historia' || card.card_key === 'nossa_missao'
+  ).map(card => ({
+    icon: getIconByName(card.icon_name || 'faHistory'),
+    title: card.title || '',
+    description: card.description || '',
+    additionalText: card.additional_description || '',
+  }))
+
+  const values = content.filter(card => 
+    card.card_key !== 'nossa_historia' && card.card_key !== 'nossa_missao'
+  ).map(card => ({
+    icon: getIconByName(card.icon_name || 'faUsers'),
+    title: card.title || '',
+    description: card.description || '',
+  }))
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || content.length === 0) return
 
     const ctx = gsap.context(() => {
       if (!titleRef.current || !subtitleRef.current || !dividerRef.current || !sectionRef.current) return
@@ -159,7 +152,7 @@ export default function AboutSection() {
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [content])
 
   return (
     <section
@@ -196,7 +189,7 @@ export default function AboutSection() {
           ref={mainCardsRef}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16"
         >
-          {mainContent.map((content, index) => {
+          {mainContent.length > 0 ? mainContent.map((content, index) => {
             const gradients = [
               'linear-gradient(135deg, rgba(153, 226, 242, 0.18) 0%, rgba(48, 169, 217, 0.12) 50%, rgba(153, 226, 242, 0.15) 100%)',
               'linear-gradient(135deg, rgba(48, 169, 217, 0.15) 0%, rgba(2, 56, 89, 0.1) 50%, rgba(48, 169, 217, 0.12) 100%)',
@@ -253,7 +246,7 @@ export default function AboutSection() {
                 </div>
               </div>
             )
-          })}
+          }) : null}
         </div>
 
         <div>
@@ -267,7 +260,7 @@ export default function AboutSection() {
             ref={valuesRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {values.map((value, index) => {
+            {values.length > 0 ? values.map((value, index) => {
               const gradients = [
                 'linear-gradient(135deg, rgba(153, 226, 242, 0.18) 0%, rgba(48, 169, 217, 0.12) 50%, rgba(153, 226, 242, 0.15) 100%)',
                 'linear-gradient(135deg, rgba(48, 169, 217, 0.15) 0%, rgba(2, 56, 89, 0.1) 50%, rgba(48, 169, 217, 0.12) 100%)',
@@ -321,7 +314,7 @@ export default function AboutSection() {
                   </div>
                 </div>
               )
-            })}
+            }) : null}
           </div>
         </div>
       </div>

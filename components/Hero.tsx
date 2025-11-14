@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { gsap, ScrollTrigger } from '@/lib/gsap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingBag, faStar, faBox, faUserFriends, faStarHalfStroke } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingBag, faStar, faBox, faUserFriends } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
@@ -237,17 +237,6 @@ export default function Hero() {
                 </div>
                 <div className="text-xs md:text-sm text-primary-lightest/60 font-medium uppercase tracking-wider">
                   Clientes Satisfeitos
-                </div>
-              </div>
-              <div className="text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                  <FontAwesomeIcon icon={faStarHalfStroke} className="text-primary-light/70 text-xl md:text-2xl" />
-                  <div className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-light to-primary-lightest bg-clip-text text-transparent">
-                    4.9
-                  </div>
-                </div>
-                <div className="text-xs md:text-sm text-primary-lightest/60 font-medium uppercase tracking-wider">
-                  Avaliação Média
                 </div>
               </div>
             </div>

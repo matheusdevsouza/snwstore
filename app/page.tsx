@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
@@ -14,6 +14,91 @@ import SmoothScroll from '@/components/SmoothScroll'
 import { trackPageView, startTimeTracking, trackScrollDepth, trackSectionView } from '@/lib/analytics'
 
 export default function Home() {
+  const [testimonialsEnabled, setTestimonialsEnabled] = useState(true)
+  const [isLoadingTestimonialsStatus, setIsLoadingTestimonialsStatus] = useState(true)
+  const [aboutSectionEnabled, setAboutSectionEnabled] = useState(true)
+  const [isLoadingAboutStatus, setIsLoadingAboutStatus] = useState(true)
+  const [contactSectionEnabled, setContactSectionEnabled] = useState(true)
+  const [isLoadingContactStatus, setIsLoadingContactStatus] = useState(true)
+
+  useEffect(() => {
+    const fetchTestimonialsStatus = async () => {
+      try {
+        const response = await fetch('/api/settings/testimonials-enabled', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+        const data = await response.json()
+        console.log('Testimonials API response:', data)
+        if (data.success && typeof data.enabled === 'boolean') {
+          console.log('Setting testimonialsEnabled to:', data.enabled)
+          setTestimonialsEnabled(data.enabled)
+        } else {
+          console.warn('Invalid response from testimonials API:', data)
+          setTestimonialsEnabled(true)
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials status:', error)
+        setTestimonialsEnabled(true)
+      } finally {
+        setIsLoadingTestimonialsStatus(false)
+      }
+    }
+    fetchTestimonialsStatus()
+  }, [])
+
+  useEffect(() => {
+    const fetchAboutStatus = async () => {
+      try {
+        const response = await fetch('/api/settings/about-section-enabled', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+        const data = await response.json()
+        if (data.success && typeof data.enabled === 'boolean') {
+          setAboutSectionEnabled(data.enabled)
+        } else {
+          setAboutSectionEnabled(true)
+        }
+      } catch (error) {
+        console.error('Error fetching about section status:', error)
+        setAboutSectionEnabled(true)
+      } finally {
+        setIsLoadingAboutStatus(false)
+      }
+    }
+    fetchAboutStatus()
+  }, [])
+
+  useEffect(() => {
+    const fetchContactStatus = async () => {
+      try {
+        const response = await fetch('/api/settings/contact-section-enabled', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+        const data = await response.json()
+        if (data.success && typeof data.enabled === 'boolean') {
+          setContactSectionEnabled(data.enabled)
+        } else {
+          setContactSectionEnabled(true)
+        }
+      } catch (error) {
+        console.error('Error fetching contact section status:', error)
+        setContactSectionEnabled(true)
+      } finally {
+        setIsLoadingContactStatus(false)
+      }
+    }
+    fetchContactStatus()
+  }, [])
+
   useEffect(() => {
     trackPageView()
     startTimeTracking()
@@ -86,12 +171,12 @@ export default function Home() {
           </div>
 
           <div className="relative z-[10]">
-            <AboutSection />
-            <Testimonials />
+            {!isLoadingAboutStatus && aboutSectionEnabled && <AboutSection />}
+            {!isLoadingTestimonialsStatus && testimonialsEnabled && <Testimonials />}
           </div>
         </div>
         
-        <Contact />
+        {!isLoadingContactStatus && contactSectionEnabled && <Contact />}
         <Footer />
       </main>
     </SmoothScroll>

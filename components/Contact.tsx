@@ -4,15 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import { gsap, ScrollTrigger } from '@/lib/gsap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faEnvelope,
-  faPhone,
-  faClock,
-  faMapMarkerAlt,
   faHeadset,
-  faShoppingCart,
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons'
-import { faWhatsapp as faWhatsappBrand } from '@fortawesome/free-brands-svg-icons'
+import { getIconByName } from '@/lib/available-icons'
 
 export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -83,44 +78,27 @@ export default function Contact() {
     }
   }
 
-  const contactInfo = [
-    {
-      icon: faPhone,
-      title: 'Telefone',
-      content: '(11) 99999-9999',
-      link: 'tel:+5511999999999',
-    },
-    {
-      icon: faWhatsappBrand,
-      title: 'WhatsApp',
-      content: '(11) 99999-9999',
-      link: 'https://wa.me/5511999999999',
-    },
-    {
-      icon: faEnvelope,
-      title: 'Email',
-      content: 'contato@snow.com.br',
-      link: 'mailto:contato@snow.com.br',
-    },
-    {
-      icon: faShoppingCart,
-      title: 'Mercado Livre',
-      content: 'Visite nossa loja',
-      link: 'https://www.mercadolivre.com.br',
-    },
-    {
-      icon: faClock,
-      title: 'Horário de Atendimento',
-      content: 'Segunda a Sexta: 9h às 18h | Sábado: 9h às 13h',
-      link: '#',
-    },
-    {
-      icon: faMapMarkerAlt,
-      title: 'Localização',
-      content: 'São Paulo, SP - Brasil',
-      link: '#',
-    },
-  ]
+  const [contactInfo, setContactInfo] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const response = await fetch('/api/settings/contact-info', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+        const data = await response.json()
+        if (data.success && Array.isArray(data.data)) {
+          setContactInfo(data.data)
+        }
+      } catch (error) {
+        console.error('Error fetching contact info:', error)
+      }
+    }
+    fetchContactInfo()
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -219,7 +197,7 @@ export default function Contact() {
     }, sectionRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [contactInfo])
 
   return (
     <section
@@ -385,30 +363,38 @@ export default function Contact() {
                 </div>
 
                 <div ref={contactCardsRef} className="space-y-4 flex-1">
-                  {contactInfo.map((info, index) => (
-                    <a
-                      key={index}
-                      href={info.link}
-                      target={info.link.startsWith('http') || info.link.startsWith('tel') || info.link.startsWith('mailto') ? '_blank' : '_self'}
-                      rel={info.link.startsWith('http') ? 'noopener noreferrer' : ''}
-                      className="contact-info-card group relative bg-gradient-to-br from-[#0D1118]/70 to-[#0D1118]/50 backdrop-blur-sm rounded-2xl p-5 border border-primary-base/30 card-hover overflow-hidden flex items-center space-x-4"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {contactInfo.length > 0 ? contactInfo.map((info, index) => {
+                    const hasLink = info.link && info.link !== '#' && info.link.trim() !== ''
+                    const Component = hasLink ? 'a' : 'div'
+                    const linkProps = hasLink ? {
+                      href: info.link,
+                      target: info.link.startsWith('http') || info.link.startsWith('tel') || info.link.startsWith('mailto') ? '_blank' : '_self',
+                      rel: info.link.startsWith('http') ? 'noopener noreferrer' : ''
+                    } : {}
+                    
+                    return (
+                      <Component
+                        key={info.id || index}
+                        {...linkProps}
+                        className="contact-info-card group relative bg-gradient-to-br from-[#0D1118]/70 to-[#0D1118]/50 backdrop-blur-sm rounded-2xl p-5 border border-primary-base/30 card-hover overflow-hidden flex items-center space-x-4"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary-light/5 to-primary-base/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                      <div className="contact-icon relative z-10 text-2xl flex-shrink-0 text-primary-light">
-                        <FontAwesomeIcon icon={info.icon} />
-                      </div>
+                        <div className="contact-icon relative z-10 text-2xl flex-shrink-0 text-primary-light">
+                          <FontAwesomeIcon icon={getIconByName(info.icon_name || 'faPhone')} />
+                        </div>
 
-                      <div className="flex-1 relative z-10 min-w-0">
-                        <h4 className="text-base font-bold text-white mb-1 group-hover:text-primary-lightest transition-colors duration-300">
-                          {info.title}
-                        </h4>
-                        <p className="text-sm text-primary-lightest/70 group-hover:text-primary-lightest/90 transition-colors duration-300 truncate">
-                          {info.content}
-                        </p>
-                      </div>
-                    </a>
-                  ))}
+                        <div className="flex-1 relative z-10 min-w-0">
+                          <h4 className="text-base font-bold text-white mb-1 group-hover:text-primary-lightest transition-colors duration-300">
+                            {info.title}
+                          </h4>
+                          <p className="text-sm text-primary-lightest/70 group-hover:text-primary-lightest/90 transition-colors duration-300 truncate">
+                            {info.description}
+                          </p>
+                        </div>
+                      </Component>
+                    )
+                  }) : null}
                 </div>
               </div>
             </div>
