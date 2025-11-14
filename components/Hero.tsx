@@ -213,7 +213,7 @@ export default function Hero() {
 
             <div 
               ref={statsRef}
-              className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start pt-6 relative"
+              className="flex flex-wrap gap-6 md:gap-8 justify-center md:justify-start pt-6 pb-12 md:pb-6 relative"
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-base/30 to-transparent" />
               

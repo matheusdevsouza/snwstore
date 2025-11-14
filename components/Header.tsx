@@ -11,10 +11,30 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
+  const [headerHeight, setHeaderHeight] = useState(80)
   const headerRef = useRef<HTMLElement>(null)
   const logoRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLUListElement>(null)
   const logoAnimated = useRef(false)
+
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight)
+      }
+    }
+    
+    updateHeaderHeight()
+    
+    const resizeObserver = new ResizeObserver(updateHeaderHeight)
+    if (headerRef.current) {
+      resizeObserver.observe(headerRef.current)
+    }
+    
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [isScrolled])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -185,11 +205,12 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out w-full overflow-x-hidden ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out w-full ${
         isScrolled
           ? 'bg-[#0D1118]/85 backdrop-blur-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-b border-primary-light/5'
           : 'bg-[#0D1118]/30 backdrop-blur-[10px] shadow-[0_4px_16px_rgba(0,0,0,0.2)] border-b border-primary-light/5'
       }`}
+      style={{ zIndex: 50 }}
     >
       
       <nav className="container mx-auto px-4 sm:px-6 py-4 max-w-full overflow-x-hidden">
@@ -318,62 +339,69 @@ export default function Header() {
       </nav>
 
       <div
-        className={`lg:hidden absolute top-full left-0 right-0 overflow-hidden transition-all duration-500 ease-in-out w-full
-          ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        className={`lg:hidden fixed left-0 right-0 bottom-0 transition-all duration-500 ease-in-out w-full overflow-y-auto
+          ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
         style={{
-          background: 'linear-gradient(180deg, rgba(13, 13, 13, 0.95) 0%, rgba(13, 13, 13, 0.98) 100%)',
+          top: `${headerHeight}px`,
+          height: `calc(100vh - ${headerHeight}px)`,
+          background: 'linear-gradient(180deg, rgba(13, 17, 24, 0.98) 0%, rgba(13, 17, 24, 0.95) 50%, rgba(13, 17, 24, 0.98) 100%)',
           backdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(48, 169, 217, 0.1)',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+          borderTop: '1px solid rgba(48, 169, 217, 0.15)',
+          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(48, 169, 217, 0.1)',
+          zIndex: 49,
         }}
       >
-        <div className="container mx-auto px-4 sm:px-6 py-6 max-w-full overflow-x-hidden">
-          <ul className="space-y-2">
-            {navItems.map((item, index) => {
-              const isActive = activeSection === item.id
-              return (
-                <li key={item.id}>
+        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-full">
+          <div className="flex flex-col h-full">
+            <nav className="flex-1 space-y-3 mb-6">
+              {navItems.map((item, index) => {
+                const isActive = activeSection === item.id
+                return (
                   <a
+                    key={item.id}
                     href={item.href}
                     onClick={(e) => handleNavClick(e, item.href)}
-                    className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-300
+                    className={`block px-5 py-4 rounded-xl text-base font-medium transition-all duration-300
                       ${isActive
-                        ? 'text-white bg-gradient-to-r from-primary-light/20 to-primary-lightest/10 border border-primary-light/30'
-                        : 'text-primary-lightest/70 hover:text-white hover:bg-primary-base/10 border border-transparent'
+                        ? 'text-white bg-gradient-to-r from-primary-light/25 to-primary-lightest/15 border-2 border-primary-light/40 shadow-lg shadow-primary-light/20'
+                        : 'text-primary-lightest/70 hover:text-white hover:bg-primary-base/15 border-2 border-transparent hover:border-primary-light/20'
                       }`}
                     style={{
                       animationDelay: `${index * 0.05}s`,
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center space-x-2">
-                        <FontAwesomeIcon icon={item.icon} className="text-sm" />
-                        <span>{item.name}</span>
+                      <span className="flex items-center space-x-3">
+                        <FontAwesomeIcon 
+                          icon={item.icon} 
+                          className={`text-lg ${isActive ? 'text-primary-light' : 'text-primary-lightest/60'}`}
+                        />
+                        <span className="font-semibold">{item.name}</span>
                       </span>
                       {isActive && (
-                        <span className="w-2 h-2 rounded-full bg-primary-light animate-pulse" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-primary-light animate-pulse shadow-lg shadow-primary-light/50" />
                       )}
                     </div>
                   </a>
-                </li>
-              )
-            })}
+                )
+              })}
+            </nav>
             
-            <li className="pt-2">
+            <div className="pt-4 border-t border-primary-base/30">
               <button
-                className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-primary-light to-primary-lightest 
-                         text-[#0D1118] font-semibold text-base shadow-lg shadow-primary-light/20
-                         hover:shadow-xl hover:shadow-primary-light/30 transition-all duration-300
-                         active:scale-95 flex items-center justify-center space-x-2"
+                className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-primary-light to-primary-lightest 
+                         text-[#0D1118] font-bold text-lg shadow-xl shadow-primary-light/30
+                         transition-all duration-300 active:scale-95 flex items-center justify-center space-x-3
+                         hover:shadow-2xl hover:shadow-primary-light/40"
                 onClick={(e) => {
                   handleNavClick(e, '#products')
                 }}
               >
-                <FontAwesomeIcon icon={faShoppingCart} />
+                <FontAwesomeIcon icon={faShoppingCart} className="text-xl" />
                 <span>Ver Produtos</span>
               </button>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
       </div>
 
