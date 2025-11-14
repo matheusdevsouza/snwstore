@@ -12,9 +12,10 @@ interface ModelProps {
   isInteracting: boolean
   onInteractionChange: (interacting: boolean) => void
   modelRef: React.RefObject<Group>
+  isMobile?: boolean
 }
 
-function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps) {
+function Model({ url, isInteracting, onInteractionChange, modelRef, isMobile = false }: ModelProps) {
   const { scene } = useGLTF(url)
   const isInitialized = useRef(false)
   const hasAnimated = useRef(false)
@@ -28,14 +29,19 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
               const hasTexture = material.map || material.normalMap || material.roughnessMap || material.metalnessMap || material.emissiveMap || material.aoMap
               
               if (hasTexture) {
+                material.emissive = new THREE.Color(0x30a9d9)
+                material.emissiveIntensity = isMobile ? 0.15 : 0.2
+                material.metalness = isMobile ? 0.4 : 0.3
+                material.roughness = isMobile ? 0.6 : 0.7
+                material.needsUpdate = true
                 return
               }
               
               if (!material.emissive || material.emissive.getHex() === 0x000000) {
                 material.emissive = new THREE.Color(0x30a9d9)
-                material.emissiveIntensity = 0.2
-                material.metalness = 0.3
-                material.roughness = 0.7
+                material.emissiveIntensity = isMobile ? 0.25 : 0.2
+                material.metalness = isMobile ? 0.4 : 0.3
+                material.roughness = isMobile ? 0.6 : 0.7
                 material.needsUpdate = true
               }
             } else if (material instanceof THREE.MeshBasicMaterial) {
@@ -43,8 +49,11 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
                 material.color = new THREE.Color(0x99e2f2)
                 material.transparent = true
                 if (material.opacity === 1) {
-                  material.opacity = 0.9
+                  material.opacity = isMobile ? 0.95 : 0.9
                 }
+              } else if (isMobile) {
+                material.opacity = Math.min(material.opacity || 1, 0.95)
+                material.needsUpdate = true
               }
             }
           }
@@ -59,7 +68,7 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
       
       isInitialized.current = true
     }
-  }, [scene])
+  }, [scene, isMobile])
 
   useEffect(() => {
     if (modelRef.current && !hasAnimated.current) {
@@ -101,10 +110,12 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
         }
       })
       
+      const scaleValue = isMobile ? 0.45 : 0.4
+      
       tl.to(modelRef.current.scale, {
-        x: 0.4,
-        y: 0.4,
-        z: 0.4,
+        x: scaleValue,
+        y: scaleValue,
+        z: scaleValue,
         duration: 1.2,
         ease: 'back.out(1.7)',
       })
@@ -146,7 +157,7 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
         }
       })
     }
-  }, [scene, modelRef])
+  }, [scene, modelRef, isMobile])
 
   useFrame((_state: any, delta: number) => {
     if (modelRef.current && !isInteracting && hasAnimated.current) {
@@ -163,10 +174,12 @@ function Model({ url, isInteracting, onInteractionChange, modelRef }: ModelProps
 
 function InteractiveControls({ 
   onInteractionChange, 
-  modelRef 
+  modelRef,
+  isMobile = false
 }: { 
   onInteractionChange: (interacting: boolean) => void
   modelRef: React.RefObject<Group>
+  isMobile?: boolean
 }) {
   const controlsRef = useRef<any>(null)
   const { camera } = useThree()
@@ -212,14 +225,22 @@ function InteractiveControls({
         isResetting.current = true
         onInteractionChange(false)
 
-        controls.enabled = false
+        try {
+          controls.enabled = false
+        } catch (e) {
+          console.warn('Error disabling controls:', e)
+        }
 
         if (!modelRef.current) return
 
         animationTimelineRef.current = gsap.timeline({
           onComplete: () => {
-            controls.enabled = true
-            controls.reset()
+            try {
+              controls.enabled = true
+              controls.reset()
+            } catch (e) {
+              console.warn('Error resetting controls:', e)
+            }
             isResetting.current = false
             animationTimelineRef.current = null
           }
@@ -232,9 +253,13 @@ function InteractiveControls({
           duration: 2,
           ease: 'power3.out',
           onUpdate: () => {
-            camera.lookAt(0, 0, 0)
-            controls.target.set(0, 0, 0)
-            controls.update()
+            try {
+              camera.lookAt(0, 0, 0)
+              controls.target.set(0, 0, 0)
+              controls.update()
+            } catch (e) {
+              console.warn('Error updating controls:', e)
+            }
           }
         }, 0)
 
@@ -249,12 +274,26 @@ function InteractiveControls({
       }, 200)
     }
 
+    const handleError = (e: ErrorEvent) => {
+      if (e.message && e.message.includes('releasePointerCapture')) {
+        e.preventDefault()
+        return false
+      }
+    }
+
     controls.addEventListener('start', handleStart)
     controls.addEventListener('end', handleEnd)
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', handleError)
+    }
 
     return () => {
       controls.removeEventListener('start', handleStart)
       controls.removeEventListener('end', handleEnd)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('error', handleError)
+      }
       if (resetTimeoutRef.current) {
         clearTimeout(resetTimeoutRef.current)
       }
@@ -262,7 +301,11 @@ function InteractiveControls({
         animationTimelineRef.current.kill()
       }
     }
-  }, [onInteractionChange, camera, modelRef])
+  }, [onInteractionChange, camera, modelRef, isMobile])
+
+  if (isMobile) {
+    return null
+  }
 
   return (
     <OrbitControls
@@ -285,35 +328,44 @@ function InteractiveControls({
 function Scene({ 
   isInteracting, 
   onInteractionChange,
-  modelRef 
+  modelRef,
+  isMobile = false
 }: { 
   isInteracting: boolean
   onInteractionChange: (interacting: boolean) => void
   modelRef: React.RefObject<Group>
+  isMobile?: boolean
 }) {
   return (
     <>
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[5, 5, 5]} intensity={0.9} color="#99E2F2" />
-      <directionalLight position={[-5, -5, -5]} intensity={0.5} color="#30A9D9" />
-      <pointLight position={[5, 5, 5]} intensity={0.7} color="#30A9D9" />
-      <pointLight position={[-5, -5, -5]} intensity={0.5} color="#99E2F2" />
-      <spotLight position={[0, 10, 0]} angle={0.4} penumbra={1} intensity={0.6} color="#99E2F2" />
+      <ambientLight intensity={isMobile ? 0.8 : 0.9} />
+      <directionalLight position={[5, 5, 5]} intensity={isMobile ? 1.0 : 1.2} color="#99E2F2" />
+      <directionalLight position={[-5, -5, -5]} intensity={isMobile ? 0.6 : 0.8} color="#30A9D9" />
+      <pointLight position={[5, 5, 5]} intensity={isMobile ? 0.8 : 1.0} color="#30A9D9" />
+      <pointLight position={[-5, -5, -5]} intensity={isMobile ? 0.6 : 0.8} color="#99E2F2" />
+      <spotLight position={[0, 10, 0]} angle={0.4} penumbra={1} intensity={isMobile ? 0.7 : 0.9} color="#99E2F2" />
 
-      <Model url="/snow.glb" isInteracting={isInteracting} onInteractionChange={onInteractionChange} modelRef={modelRef} />
+      <Model url="/snow.glb" isInteracting={isInteracting} onInteractionChange={onInteractionChange} modelRef={modelRef} isMobile={isMobile} />
 
-      <InteractiveControls onInteractionChange={onInteractionChange} modelRef={modelRef} />
+      <InteractiveControls onInteractionChange={onInteractionChange} modelRef={modelRef} isMobile={isMobile} />
     </>
   )
 }
 
 export default function Model3D() {
   const [isInteracting, setIsInteracting] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const modelRef = useRef<Group>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       useGLTF.preload('/snow.glb')
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768)
+      }
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
+      return () => window.removeEventListener('resize', checkMobile)
     }
   }, [])
 
@@ -326,7 +378,7 @@ export default function Model3D() {
       }}
     >
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 35 }}
+        camera={{ position: [0, 0, isMobile ? 6 : 8], fov: isMobile ? 40 : 35 }}
         gl={{ 
           alpha: true, 
           antialias: true, 
@@ -334,7 +386,7 @@ export default function Model3D() {
           stencil: false,
           depth: true
         }}
-        dpr={[1, 2]}
+        dpr={isMobile ? [1, 1.5] : [1, 2]}
         style={{ 
           background: 'transparent', 
           width: '100%', 
@@ -344,6 +396,19 @@ export default function Model3D() {
         onCreated={({ gl }) => {        
           gl.domElement.style.pointerEvents = 'auto'
           gl.domElement.style.touchAction = 'none'
+          
+          if (typeof gl.domElement.releasePointerCapture === 'function') {
+            const originalReleasePointerCapture = gl.domElement.releasePointerCapture.bind(gl.domElement)
+            gl.domElement.releasePointerCapture = function(pointerId: number) {
+              try {
+                originalReleasePointerCapture(pointerId)
+              } catch (e: any) {
+                if (!e?.message?.includes('releasePointerCapture')) {
+                  console.warn('Pointer capture error:', e)
+                }
+              }
+            }
+          }
         }}
       >
         <Suspense fallback={null}>
@@ -351,6 +416,7 @@ export default function Model3D() {
             isInteracting={isInteracting} 
             onInteractionChange={setIsInteracting}
             modelRef={modelRef}
+            isMobile={isMobile}
           />
         </Suspense>
       </Canvas>

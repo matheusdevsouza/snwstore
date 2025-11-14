@@ -168,7 +168,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="absolute inset-0 z-[2] pointer-events-none">
+      <div className="hidden md:block absolute inset-0 z-[2] pointer-events-none">
         <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 pointer-events-auto">
           <Model3D />
         </div>
@@ -176,7 +176,7 @@ export default function Hero() {
 
       <div className="container mx-auto px-4 relative z-10 pointer-events-none">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="flex-1 text-center md:text-left space-y-6 relative z-20 pointer-events-auto">
+          <div className="flex-1 text-center md:text-left space-y-6 relative z-20 pointer-events-auto pt-8 md:pt-0">
             <h1
               ref={titleRef}
               className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight max-w-4xl"
@@ -251,9 +251,15 @@ export default function Hero() {
                 </div>
               </div>
             </div>
+
+            <div className="md:hidden w-full flex justify-center -mt-8">
+              <div className="w-full max-w-[400px] h-[400px] relative pointer-events-auto">
+                <Model3D />
+              </div>
+            </div>
           </div>
 
-          <div ref={logoRef} className="flex-1 flex justify-center md:justify-end min-h-[500px] w-full md:w-auto pointer-events-none">
+          <div ref={logoRef} className="hidden md:flex flex-1 justify-center md:justify-end min-h-[500px] w-full md:w-auto pointer-events-none">
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faTimes, faShoppingCart, faHome, faBox, faEnvelope, faInfoCircle, faComments } from '@fortawesome/free-solid-svg-icons'
 import Image from 'next/image'
 import { gsap } from '@/lib/gsap'
+import { getLenis } from '@/lib/lenis'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -163,13 +164,21 @@ export default function Header() {
     const element = document.getElementById(targetId)
     if (element) {
       const offset = 80
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.pageYOffset - offset
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      })
+      const lenis = getLenis()
+      if (lenis) {
+        lenis.scrollTo(element, {
+          offset: -offset,
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        })
+      } else {
+        const elementPosition = element.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - offset
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        })
+      }
     }
   }
 
@@ -185,7 +194,7 @@ export default function Header() {
       
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center z-10">
             <a
               href="#home"
               onClick={(e) => handleNavClick(e, '#home')}
@@ -193,7 +202,7 @@ export default function Header() {
             >
               <div
                 ref={logoRef}
-                className="relative w-14 h-14 transition-transform duration-300 ease-out hover:scale-110 cursor-pointer opacity-100"
+                className="relative w-12 h-12 lg:w-14 lg:h-14 transition-transform duration-300 ease-out hover:scale-110 cursor-pointer opacity-100 flex-shrink-0"
                 style={{ 
                   transformOrigin: 'center',
                 }}
@@ -296,7 +305,7 @@ export default function Header() {
             className="lg:hidden relative w-10 h-10 rounded-lg bg-primary-base/20 backdrop-blur-sm
                      border border-primary-light/20 flex items-center justify-center
                      text-primary-lightest hover:text-white hover:bg-primary-base/30
-                     transition-all duration-300 hover:scale-110 hover:rotate-90"
+                     transition-all duration-300 hover:scale-110"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -304,9 +313,6 @@ export default function Header() {
               icon={isMenuOpen ? faTimes : faBars}
               className="text-lg transition-transform duration-300"
             />
-            {!isMenuOpen && (
-              <span className="absolute inset-0 rounded-lg bg-primary-light/20 animate-ping opacity-20" />
-            )}
           </button>
         </div>
       </nav>
