@@ -19,12 +19,18 @@ export async function GET(request: NextRequest) {
       isAuthenticated = false
     }
 
+    const shouldFilterActive = !isAuthenticated && !includeInactive
+
     let query = supabaseAdmin
       .from('testimonials')
       .select('*')
 
-    if (!isAuthenticated && !includeInactive) {
+    if (shouldFilterActive) {
       query = query.eq('is_active', true)
+    }
+
+    if (featured === 'true') {
+      query = query.eq('is_featured', true)
     }
 
     query = query
@@ -32,18 +38,29 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    if (featured === 'true') {
-      query = query.eq('is_featured', true)
-    }
-
     const { data, error } = await query
 
     if (error) {
       console.error('Testimonials fetch error:', error)
       return NextResponse.json(
         { success: false, error: 'Failed to fetch testimonials', details: error.message },
-        { status: 500 }
+        {
+          status: 500,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        }
       )
+    }
+
+    if (shouldFilterActive) {
+      console.log(`[Testimonials API] Filtered active only. Found ${data?.length || 0} active testimonials`)
+      const inactiveCount = data?.filter((t: any) => !t.is_active).length || 0
+      if (inactiveCount > 0) {
+        console.warn(`[Testimonials API] WARNING: ${inactiveCount} inactive testimonials found despite filter!`)
+      }
     }
 
     return NextResponse.json(
@@ -52,7 +69,14 @@ export async function GET(request: NextRequest) {
         data: data || [],
         count: data?.length || 0
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
     )
 
   } catch (error: any) {

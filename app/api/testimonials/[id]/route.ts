@@ -130,7 +130,7 @@ export async function DELETE(
 
     const { data, error } = await supabaseAdmin
       .from('testimonials')
-      .update({ is_active: false })
+      .delete()
       .eq('id', id)
       .select()
       .single()

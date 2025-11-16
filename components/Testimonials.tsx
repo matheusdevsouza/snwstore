@@ -16,6 +16,7 @@ interface Testimonial {
   rating: number
   text: string
   avatar_url: string
+  is_active?: boolean
 }
 
 export default function Testimonials() {
@@ -31,14 +32,23 @@ export default function Testimonials() {
     const fetchTestimonials = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch('/api/testimonials')
+        const response = await fetch('/api/testimonials', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        })
         const result = await response.json()
         
         console.log('Testimonials API response:', result)
         
         if (result.success && result.data) {
-          setTestimonials(result.data)
-          console.log('Testimonials loaded:', result.data.length)
+          const activeTestimonials = result.data.filter((t: Testimonial & { is_active?: boolean }) => 
+            t.is_active !== false
+          )
+          setTestimonials(activeTestimonials)
+          console.log('Testimonials loaded:', activeTestimonials.length, 'active testimonials')
         } else {
           console.error('Testimonials API error:', result.error, result.details)
         }
