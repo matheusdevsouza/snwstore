@@ -1,18 +1,18 @@
 # ❄️ SNW Store - Landing Page
 
-Landing page avançada e moderna para revendas no Mercado Livre, com design dark mode elegante, animações suaves com GSAP, modelo 3D interativo e uma experiência de usuário excepcional.
+Landing page avançada e moderna para revendas no Mercado Livre, com design dark mode elegante, animações suaves com GSAP, modelo 3D interativo e uma experiência de usuário.
 
 ## ✨ Características Principais
 
-- 🎨 **Design Dark Mode Elegante** - Interface moderna com paleta de cores personalizada e background azulado escuro (#0D1118)
-- 🎬 **Animações GSAP Avançadas** - Animações suaves e profissionais com ScrollTrigger
-- 🎯 **Modelo 3D Interativo** - Snowflake 3D renderizado com Three.js, interativo e animado
-- 📱 **Totalmente Responsivo** - Funciona perfeitamente em todos os dispositivos
-- ⚡ **Performance Otimizada** - Next.js 14 com App Router e SSR otimizado
-- 🎨 **UI/UX Avançado** - Hierarquia visual, gradientes, hovers, glows e efeitos visuais
-- 🔍 **SEO Friendly** - Metadados otimizados para mecanismos de busca
-- 🚀 **Pronto para Vercel** - Deploy fácil e rápido
-- 🎭 **Scrollbar Personalizada** - Scrollbar customizada com cores da paleta
+- 🎨 **Dark Mode** - Interface moderna com paleta de cores personalizada e background azulado escuro (#0D1118)
+- 🎬 **Animações GSAP** - Animações suaves e profissionais com ScrollTrigger
+- 🎯 **Modelo 3D** - Snowflake 3D renderizado com Three.js, interativo e animado
+- 📱 **Responsivo** - Funciona perfeitamente em todos os dispositivos
+- ⚡ **Performance** - Next.js 14 com App Router e SSR otimizado
+- 🎨 **UI/UX** - Hierarquia visual, gradientes, hovers, glows e efeitos visuais
+- 🔍 **SEO** - Metadados otimizados para mecanismos de busca
+- 🚀 **Vercel** - Deploy fácil e rápido
+- 🎭 **Scrollbar** - Scrollbar customizada com cores da paleta
 - 🌊 **Shape Dividers** - Dividers SVG personalizados entre seções
 
 ## 🚀 Stack Tecnológica
@@ -24,7 +24,7 @@ Landing page avançada e moderna para revendas no Mercado Livre, com design dark
 
 ### Estilização
 - **Tailwind CSS** - Framework CSS utility-first para estilização rápida
-- **CSS Custom Properties** - Variáveis CSS para temas e customizações
+- **CSS** - Variáveis CSS para temas e customizações
 - **PostCSS** - Processamento de CSS moderno
 
 ### Animações e Efeitos
@@ -336,8 +336,4 @@ Este é um projeto privado. Para sugestões ou melhorias, entre em contato com o
 Para dúvidas ou problemas:
 - Abra uma issue no repositório
 - Entre em contato através do formulário no site
-- Email: contato@snow.com.br
 
----
-
-**Desenvolvido com ❤️ para SNW Store**
